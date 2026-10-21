@@ -1,5 +1,11 @@
 import rawFriends from "../data/friends.json";
-import { asArray, asRecord, isUsableUrl, str, strArray } from "../utils/cms-value";
+import {
+	asArray,
+	asRecord,
+	isUsableUrl,
+	str,
+	strArray,
+} from "../utils/cms-value";
 
 // 友情链接数据配置
 //
@@ -17,24 +23,26 @@ export interface FriendItem {
 }
 
 function readFriends(): FriendItem[] {
-	return asArray(asRecord(rawFriends)?.list)
-		.map((item) => asRecord(item))
-		.filter((item): item is Record<string, unknown> => item !== undefined)
-		.map((item) => ({
-			title: str(item.title, ""),
-			siteurl: str(item.siteurl, ""),
-			imgurl: str(item.imgurl, ""),
-			desc: str(item.desc, ""),
-			tags: strArray(item.tags),
-		}))
-		// 站点名与可访问地址是硬要求
-		.filter(
-			(friend) =>
-				friend.title !== "" &&
-				/^https?:\/\//i.test(friend.siteurl) &&
-				isUsableUrl(friend.siteurl),
-		)
-		.map((friend, index) => ({ id: index + 1, ...friend }));
+	return (
+		asArray(asRecord(rawFriends)?.list)
+			.map((item) => asRecord(item))
+			.filter((item): item is Record<string, unknown> => item !== undefined)
+			.map((item) => ({
+				title: str(item.title, ""),
+				siteurl: str(item.siteurl, ""),
+				imgurl: str(item.imgurl, ""),
+				desc: str(item.desc, ""),
+				tags: strArray(item.tags),
+			}))
+			// 站点名与可访问地址是硬要求
+			.filter(
+				(friend) =>
+					friend.title !== "" &&
+					/^https?:\/\//i.test(friend.siteurl) &&
+					isUsableUrl(friend.siteurl),
+			)
+			.map((friend, index) => ({ id: index + 1, ...friend }))
+	);
 }
 
 const friendsData: FriendItem[] = readFriends();

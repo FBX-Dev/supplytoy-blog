@@ -23,10 +23,8 @@ interface Props {
 // 既是隐私问题，也让本站在 Search Console / 广告审核里显得可疑。
 // 本站不使用 GTM（分析走 GA4，见 GoogleScripts.astro），所以默认值留空，
 // 空值时不注入任何东西。
-const {
-	gtmId = "",
-	thirdPartyAnalytics = { enable: false, clarityId: "" },
-} = Astro.props;
+const { gtmId = "", thirdPartyAnalytics = { enable: false, clarityId: "" } } =
+	Astro.props;
 
 const clarityEnable =
 	thirdPartyAnalytics.enable && thirdPartyAnalytics.clarityId;

@@ -8,9 +8,19 @@ interface Props {
 	page: Page;
 	class?: string;
 	style?: string;
+	/**
+	 * 分页所在的路径前缀。
+	 * - 首页分页（`/`、`/2/`、`/3/`…）：留空（默认）。
+	 * - `/posts` 分页（`/posts`、`/posts/2`…）：传 `"/posts"`。
+	 *
+	 * 🔴 不传的后果（实测过的真 bug）：页码链接会按首页规则生成，
+	 * 于是 `/posts/2` 上的「1」指向 `/`、「3」指向 `/3/`，
+	 * 全部跳到首页分页去。上一页/下一页箭头不受影响（走 page.url）。
+	 */
+	basePath?: string;
 }
 
-const { page, style } = Astro.props;
+const { page, style, basePath = "" } = Astro.props;
 
 const HIDDEN = -1;
 
@@ -61,6 +71,12 @@ if (r < page.lastPage) {
 }
 
 const getPageUrl = (p: number) => {
+	// 带前缀（/posts）：第 1 页是裸前缀 `/posts`，其余 `/posts/2`、`/posts/3`…
+	// 与 [...page].astro 里 page.url.current 的写法保持一致。
+	if (basePath) {
+		return p === 1 ? basePath : `${basePath}/${p}`;
+	}
+	// 首页分页：第 1 页是 `/`，其余 `/2/`、`/3/`…（保持上游 Mizuki 原样）
 	if (p === 1) {
 		return "/";
 	}

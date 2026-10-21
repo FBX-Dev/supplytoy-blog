@@ -43,7 +43,11 @@ const page = {
 	end: posts.length - 1,
 	total: posts.length,
 	size: PAGE_SIZE,
-	url: { current: `/category/${slugifyTaxonomy(categoryName)}`, prev: undefined, next: undefined },
+	url: {
+		current: `/category/${slugifyTaxonomy(categoryName)}`,
+		prev: undefined,
+		next: undefined,
+	},
 };
 ---
 

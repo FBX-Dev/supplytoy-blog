@@ -1,7 +1,15 @@
 import rawHomeText from "../data/home-text.json";
 import rawSiteInfo from "../data/site-info.json";
 import type { SiteConfig } from "../types/config";
-import { asRecord, bool, num, oneOf, optString, str, strArray } from "../utils/cms-value";
+import {
+	asRecord,
+	bool,
+	num,
+	oneOf,
+	optString,
+	str,
+	strArray,
+} from "../utils/cms-value";
 
 /**
  * 站点级配置现在由后台（Sveltia CMS）写进 `src/data/site-info.json` 和
@@ -29,7 +37,11 @@ export type SiteLang = (typeof SITE_LANG_OPTIONS)[number];
 
 // 定义站点语言
 // 本站是英文单语站，兜底值必须是 "en"；若漏写会退回中文排版与中文日期格式。
-export const SITE_LANG: SiteLang = oneOf(siteInfo?.lang, SITE_LANG_OPTIONS, "en");
+export const SITE_LANG: SiteLang = oneOf(
+	siteInfo?.lang,
+	SITE_LANG_OPTIONS,
+	"en",
+);
 
 /** 站点URL必须是绝对地址，否则 canonical / RSS / sitemap 全会写错 */
 function readSiteURL(value: unknown, fallback: string): string {
@@ -116,7 +128,10 @@ function readHomeText(): NonNullable<SiteConfig["banner"]["homeText"]> {
 
 export const siteConfig: SiteConfig = {
 	title: str(siteInfo?.title, "SupplyToy"),
-	subtitle: str(siteInfo?.subtitle, "Toy Reviews and Buying Guides for Parents"),
+	subtitle: str(
+		siteInfo?.subtitle,
+		"Toy Reviews and Buying Guides for Parents",
+	),
 	siteURL: readSiteURL(siteInfo?.siteURL, "https://supplytoy.com/"),
 	siteStartDate: str(siteInfo?.siteStartDate, "2026-09-27"),
 	timeZone: str(siteInfo?.timeZone, "America/New_York"),

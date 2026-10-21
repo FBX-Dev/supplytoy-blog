@@ -69,7 +69,8 @@ export function oneOf<T extends string>(
 	allowed: readonly T[],
 	fallback: T,
 ): T {
-	return typeof value === "string" && (allowed as readonly string[]).includes(value)
+	return typeof value === "string" &&
+		(allowed as readonly string[]).includes(value)
 		? (value as T)
 		: fallback;
 }

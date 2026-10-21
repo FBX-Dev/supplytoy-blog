@@ -13,21 +13,12 @@
  * ⚠️ 这与老站的 `?page=N` 不完全一致，属于**已知的、可接受的差异**：
  * 查询参数页面从来不被搜索引擎当作独立 URL 收录，因此没有收录损失。
  */
-import PostPage from "@components/features/posts/PostPage.astro";
 import Pagination from "@components/control/Pagination.astro";
 import { PageHeader } from "@components/features/page-header";
+import PostPage from "@components/features/posts/PostPage.astro";
 import { getSortedPosts } from "@utils/content-utils";
 
 import MainGridLayout from "../../layouts/MainGridLayout.astro";
-
-/**
- * 老站 /posts 是 24 篇/页（首页 8 篇/页是另一套 PAGE_SIZE）。
- *
- * ⚠️ 这个常量必须写在 `getStaticPaths` **内部**，不能提到模块作用域：
- * Astro 会把 `getStaticPaths` 抽成独立 chunk，模块作用域里"看起来没被组件用到"
- * 的常量会被 tree-shaking 掉，运行时报 `POSTS_PAGE_SIZE is not defined`。
- */
-const POSTS_PAGE_SIZE = 24;
 
 export async function getStaticPaths() {
 	const pageSize = 24;
@@ -52,6 +43,16 @@ export async function getStaticPaths() {
 
 const { data, currentPage, lastPage, total } = Astro.props;
 
+/**
+ * 手工拼一个 Astro `Page` 形状的对象给 PostPage / Pagination 用。
+ *
+ * 🔴 这里**不能**用 `paginate()`：本页要产出 `/posts`、`/posts/2`…，
+ * 而 `paginate()` 的 `prev`/`next` 与 `url.current` 是按「当前目录」拼的，
+ * 与老站 `/posts` 的形态对不上，且它不支持自定义首/末页 URL。
+ *
+ * ⚠️ `first` / `last` 必须给：Astro 的 `Page` 类型里有这两个字段，
+ * 缺了 `astro check` 会报 ts(2322)「url 缺少 first, last」。
+ */
 const page = {
 	data,
 	currentPage,
@@ -62,8 +63,15 @@ const page = {
 	size: 24,
 	url: {
 		current: currentPage === 1 ? "/posts" : `/posts/${currentPage}`,
-		prev: currentPage === 2 ? "/posts" : currentPage > 2 ? `/posts/${currentPage - 1}` : undefined,
+		prev:
+			currentPage === 2
+				? "/posts"
+				: currentPage > 2
+					? `/posts/${currentPage - 1}`
+					: undefined,
 		next: currentPage < lastPage ? `/posts/${currentPage + 1}` : undefined,
+		first: currentPage > 1 ? "/posts" : undefined,
+		last: currentPage < lastPage ? `/posts/${lastPage}` : undefined,
 	},
 };
 ---
@@ -77,7 +85,7 @@ const page = {
 		<div class="card-base z-10 px-9 py-6 relative w-full">
 			<PageHeader title="All Posts" subtitle={`${total} articles`} />
 			<PostPage page={page} />
-			<Pagination class="mx-auto onload-animation" page={page} />
+			<Pagination class="mx-auto onload-animation" page={page} basePath="/posts" />
 		</div>
 	</div>
 </MainGridLayout>

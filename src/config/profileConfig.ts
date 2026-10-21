@@ -1,6 +1,13 @@
 import rawProfile from "../data/profile.json";
 import type { ProfileConfig } from "../types/config";
-import { asArray, asRecord, bool, isUsableUrl, num, str } from "../utils/cms-value";
+import {
+	asArray,
+	asRecord,
+	bool,
+	isUsableUrl,
+	num,
+	str,
+} from "../utils/cms-value";
 
 /**
  * 作者资料由后台（Sveltia CMS）写进 `src/data/profile.json`。
@@ -13,16 +20,20 @@ import { asArray, asRecord, bool, isUsableUrl, num, str } from "../utils/cms-val
 const profile = asRecord(rawProfile);
 
 function readLinks(): ProfileConfig["links"] {
-	return asArray(profile?.links)
-		.map((item) => asRecord(item))
-		.filter((item): item is Record<string, unknown> => item !== undefined)
-		.map((item) => ({
-			name: str(item.name, ""),
-			url: str(item.url, ""),
-			icon: str(item.icon, ""),
-		}))
-		// 社交图标要 name / url / icon 三者齐全才有意义，缺一个就整条丢掉
-		.filter((link) => link.name && link.url && link.icon && isUsableUrl(link.url));
+	return (
+		asArray(profile?.links)
+			.map((item) => asRecord(item))
+			.filter((item): item is Record<string, unknown> => item !== undefined)
+			.map((item) => ({
+				name: str(item.name, ""),
+				url: str(item.url, ""),
+				icon: str(item.icon, ""),
+			}))
+			// 社交图标要 name / url / icon 三者齐全才有意义，缺一个就整条丢掉
+			.filter(
+				(link) => link.name && link.url && link.icon && isUsableUrl(link.url),
+			)
+	);
 }
 
 function readTypewriter(): ProfileConfig["typewriter"] {

@@ -22,13 +22,24 @@
 import fs from "node:fs";
 import path from "node:path";
 
+/**
+ * 掩码用的哨兵字符。
+ *
+ * 🔴 不能用裸的 `\u0000`（NUL）：Biome 的 `noControlCharactersInRegex`
+ * 会直接判 error，CI 的 lint 过不去。改用 Unicode **非字符**（U+FDD0，
+ * 永久保留不分配给任何字符）——它同样不可能出现在正常 HTML 里，
+ * 但属于合法码点，不会触发该规则。
+ */
+const SENTINEL = "\uFDD0";
+const SENTINEL_RE = /\uFDD0PROTECTED(\d+)\uFDD0/g;
+
 function stripCommentsInHtml(html) {
 	// 先把 <script>/<style> 整段摘出来，避免误伤其内部内容
 	const protectedBlocks = [];
 	const masked = html.replace(
 		/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi,
 		(block) => {
-			const token = `\u0000PROTECTED${protectedBlocks.length}\u0000`;
+			const token = `${SENTINEL}PROTECTED${protectedBlocks.length}${SENTINEL}`;
 			protectedBlocks.push(block);
 			return token;
 		},
@@ -36,7 +47,7 @@ function stripCommentsInHtml(html) {
 
 	const stripped = masked.replace(/<!--[\s\S]*?-->/g, "");
 
-	return stripped.replace(/\u0000PROTECTED(\d+)\u0000/g, (_m, i) => protectedBlocks[Number(i)]);
+	return stripped.replace(SENTINEL_RE, (_m, i) => protectedBlocks[Number(i)]);
 }
 
 function walkHtml(dir, out = []) {

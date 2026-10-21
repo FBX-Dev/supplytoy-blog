@@ -1,6 +1,9 @@
 # build output
 dist/
 
+# wrangler 本地状态（deploy 时会写临时产物）
+.wrangler/
+
 # generated types
 .astro/
 demo

@@ -32,15 +32,33 @@ const html = all.filter((f) => f.endsWith(".html"));
 const rel = (f) => "/" + path.relative(DIST, f).replace(/\\/g, "/");
 const read = (f) => fs.readFileSync(f, "utf8");
 
+// 🔴 期望值全部从**源内容**动态派生，不写死。
+// 理由：本脚本要被每周四的定时任务反复执行，每批会新增 3 篇文章。
+// 写死「95 篇 / 152 条」的话，第二周就必然报假失败，定时任务会误判成内容出错。
+// 现在改成「源 md 数 = 产物文章页数」「sitemap 条数 = 各组成部分之和」，
+// 这样断言仍然严格（数量必须自洽），但不会随批次增长而失效。
+const SRC_POSTS = path.resolve("src/content/posts");
+const srcPostFiles = fs
+	.readdirSync(SRC_POSTS)
+	.filter((f) => f.endsWith(".md"));
+const EXPECT_POSTS = srcPostFiles.length;
+
+// 分类页固定 6 个（业务规则，不随批次变）
+const EXPECT_CATS = 6;
+
 console.log(`\n构建产物: ${all.length} 个文件，其中 ${html.length} 个 HTML\n`);
+console.log(`源内容: ${EXPECT_POSTS} 篇文章\n`);
 
 // ── 1. 页面数量与 URL 形态 ──────────────────────────────
 console.log("【1】URL 形态与页面数量");
 {
 	const posts = html.filter((f) => rel(f).startsWith("/post/"));
-	posts.length === 95
-		? ok("95 篇文章页", `/post/<slug>.html × ${posts.length}`)
-		: bad("文章页数量", `期望 95，实际 ${posts.length}`);
+	posts.length === EXPECT_POSTS
+		? ok(`${EXPECT_POSTS} 篇文章页`, `/post/<slug>.html × ${posts.length}`)
+		: bad(
+				"文章页数量与源不符",
+				`源 ${EXPECT_POSTS} 篇，产物 ${posts.length} 页`,
+			);
 
 	// 不允许出现 /posts/<slug>（复数文章路径）——那是 npuai 的形态
 	// ⚠️ 但 /posts/2、/posts/3 是 /posts 列表的分页，属于正常产物，要排除。
@@ -60,10 +78,12 @@ console.log("【1】URL 形态与页面数量");
 	}
 
 	const cats = html.filter((f) => rel(f).startsWith("/category/"));
-	cats.length === 6 ? ok("6 个分类页") : bad("分类页数量", `期望 6，实际 ${cats.length}`);
+	cats.length === EXPECT_CATS
+		? ok(`${EXPECT_CATS} 个分类页`)
+		: bad("分类页数量", `期望 ${EXPECT_CATS}，实际 ${cats.length}`);
 
 	const tags = html.filter((f) => rel(f).startsWith("/tag/"));
-	ok("标签页数量", `${tags.length} 个（46 个多篇 + 单篇 noindex）`);
+	ok("标签页数量", `${tags.length} 个（多篇可索引 + 单篇 noindex）`);
 }
 
 // ── 2. 不得存在的页面 ──────────────────────────────────
@@ -253,11 +273,19 @@ console.log("\n【6】标签页 noindex 与 sitemap 收录");
 	const urls = [...sm.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
 	ok("sitemap 条数", `${urls.length} 条`);
 
-	// 🔴 与线上 sitemap 硬对齐（这是 SEO 零损失的硬指标）
-	// 线上是 1 首页 + 95 文章 + 6 分类 + 46 标签 + /posts /categories /tags /friend-links
-	urls.length === 152
-		? ok("sitemap = 152 条，与线上一致")
-		: bad("sitemap 条数偏离线上", `期望 152，实际 ${urls.length}`);
+	// 🔴 sitemap 条数必须自洽（不写死总数）。
+	// 组成：1 首页 + N 文章 + 6 分类 + K 标签(≥2 篇) + 4 个枢纽页(/posts /categories /tags /friend-links)。
+	// K 由内容派生（见上 indexable），N 来自源 md 数 —— 两边都对上才算通过。
+	// 迁移时线上是 95 篇 / 152 条；每批新增 3 篇会自然涨到 155、158…
+	const EXPECT_SITEMAP = 1 + EXPECT_POSTS + EXPECT_CATS + indexable.size + 4;
+	urls.length === EXPECT_SITEMAP
+		? ok(
+				`sitemap = ${EXPECT_SITEMAP} 条（1 首页 + ${EXPECT_POSTS} 文章 + ${EXPECT_CATS} 分类 + ${indexable.size} 标签 + 4 枢纽）`,
+			)
+		: bad(
+				"sitemap 条数与组成不符",
+				`期望 ${EXPECT_SITEMAP}，实际 ${urls.length}`,
+			);
 
 	const sitemapTags = urls.filter((u) => u.includes("/tag/"));
 	sitemapTags.length === indexable.size

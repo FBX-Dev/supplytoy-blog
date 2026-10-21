@@ -1,0 +1,83 @@
+---
+/**
+ * `/posts` —— 全部文章列表（分页）。
+ *
+ * 老站线上有：24 篇/页（首页则是 8 篇/页），标题 `All Posts`（**不带站名后缀**），
+ * canonical 指向 `/posts`（第 2 页及以后也 canonical 到 `/posts`）。
+ * 分页产物不进 sitemap（在 astro.config.mjs 的 sitemap filter 里排除）。
+ *
+ * 注意分页 URL 形态：老站用 `/posts?page=2`。本页沿用同一形态 ——
+ * 用 Astro 的 paginate 时通过 `params` 为空 + 查询参数读取来模拟不可行
+ * （静态站查询参数无法预渲染），因此这里改为产出 `/posts`、`/posts/2`、
+ * `/posts/3`… 并在 Workers 侧由 html_handling 直接命中。
+ * ⚠️ 这与老站的 `?page=N` 不完全一致，属于**已知的、可接受的差异**：
+ * 查询参数页面从来不被搜索引擎当作独立 URL 收录，因此没有收录损失。
+ */
+import PostPage from "@components/features/posts/PostPage.astro";
+import Pagination from "@components/control/Pagination.astro";
+import { PageHeader } from "@components/features/page-header";
+import { getSortedPosts } from "@utils/content-utils";
+
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+
+/**
+ * 老站 /posts 是 24 篇/页（首页 8 篇/页是另一套 PAGE_SIZE）。
+ *
+ * ⚠️ 这个常量必须写在 `getStaticPaths` **内部**，不能提到模块作用域：
+ * Astro 会把 `getStaticPaths` 抽成独立 chunk，模块作用域里"看起来没被组件用到"
+ * 的常量会被 tree-shaking 掉，运行时报 `POSTS_PAGE_SIZE is not defined`。
+ */
+const POSTS_PAGE_SIZE = 24;
+
+export async function getStaticPaths() {
+	const pageSize = 24;
+	const posts = await getSortedPosts();
+	const lastPage = Math.max(1, Math.ceil(posts.length / pageSize));
+	const paths = [];
+	for (let p = 1; p <= lastPage; p++) {
+		const start = (p - 1) * pageSize;
+		const data = posts.slice(start, start + pageSize);
+		paths.push({
+			params: { page: p === 1 ? undefined : String(p) },
+			props: {
+				data,
+				currentPage: p,
+				lastPage,
+				total: posts.length,
+			},
+		});
+	}
+	return paths;
+}
+
+const { data, currentPage, lastPage, total } = Astro.props;
+
+const page = {
+	data,
+	currentPage,
+	lastPage,
+	start: (currentPage - 1) * 24,
+	end: (currentPage - 1) * 24 + data.length - 1,
+	total,
+	size: 24,
+	url: {
+		current: currentPage === 1 ? "/posts" : `/posts/${currentPage}`,
+		prev: currentPage === 2 ? "/posts" : currentPage > 2 ? `/posts/${currentPage - 1}` : undefined,
+		next: currentPage < lastPage ? `/posts/${currentPage + 1}` : undefined,
+	},
+};
+---
+
+<MainGridLayout title="All Posts" titleSuffix={false}>
+	<script>
+		import("../../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<PageHeader title="All Posts" subtitle={`${total} articles`} />
+			<PostPage page={page} />
+			<Pagination class="mx-auto onload-animation" page={page} />
+		</div>
+	</div>
+</MainGridLayout>

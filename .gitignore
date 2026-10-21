@@ -1,0 +1,70 @@
+# build output
+dist/
+
+# generated types
+.astro/
+demo
+plans
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# content repository (independent mode)
+/content/
+*.backup
+
+# Large zip files
+*.zip
+
+# macOS-specific files
+.DS_Store
+
+.vercel
+
+package-lock.json
+bun.lock
+bun.lockb
+yarn.lock
+
+# ide
+.idea
+*.iml
+.claude
+
+cache/
+fuwari/
+src/data/myself.ts
+src/pages/myself.astro
+
+# Bangumi generated data
+src/data/bangumi-data.json
+
+# Bilibili generated data
+src/data/bilibili-data.json
+
+# Lighthouse CI
+.lighthouseci/
+
+# Live2D editor source files
+*.psd
+*.psd~
+*.cmo3
+*.vtube.json
+
+# 本地校验脚本与临时产物（无头浏览器截图、打包产物、chrome profile）
+_tmp_verify/
+
+# 本地回收站：dist_* 快照、对比样本、被删路由备份。
+# ⚠️ 体积可到 1.5G，绝不能被提交。里面 www-redirect-rule.json 是
+# zone Redirect Rule 的唯一本地备份，**不要删文件**，只是不提交。
+_trash/

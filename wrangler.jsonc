@@ -1,0 +1,32 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "supplytoy-blog",
+	"compatibility_date": "2026-09-01",
+	"workers_dev": true,
+	"assets": {
+		"directory": "./dist",
+		"not_found_handling": "404-page",
+		"html_handling": "auto-trailing-slash"
+	},
+	// 🔴 只声明 apex。
+	//
+	// www.supplytoy.com 是**单独**通过 Workers Domains API 绑到本 Worker 的
+	// （`PUT /accounts/{acct}/workers/domains` + `override_existing_origin`），
+	// 不在 wrangler.jsonc 里声明，原因是 custom domain 是声明式的：
+	// 若把 www 也写进 routes，每次 deploy 都会重新声明它，反而不好控制。
+	//
+	// www→apex 的 301 由 **zone 级 Redirect Rule** 提供
+	// （phase `http_request_dynamic_redirect`，见 _trash/www-redirect-rule.json）。
+	// 迁移前这条 301 是旧 Worker 里 server.ts 的 resolveCanonicalHostname() 做的；
+	// 换成静态站后 Worker 里没有代码入口，所以必须改由 zone 规则接管，
+	// 否则 www 会 200 出重复内容（两个 host 同内容 → SEO 重复内容问题）。
+	"routes": [
+		{
+			"pattern": "supplytoy.com",
+			"custom_domain": true
+		}
+	],
+	"observability": {
+		"enabled": true
+	}
+}

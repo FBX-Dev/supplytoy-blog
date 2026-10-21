@@ -1,0 +1,61 @@
+---
+/**
+ * `/category/<slug>` —— 单个分类的文章列表。
+ *
+ * 老站线上有 6 个这样的页面（Toy Reviews / Buying Guides / Gift Ideas /
+ * Safety / Play & Learning / Ages & Stages），都在 sitemap 里且已被收录，
+ * 所以必须按**同样的 URL** 产出，不能退化成 `/archive/?category=X`。
+ *
+ * 标题格式照抄老站：`Safety — SupplyToy`（em dash）。
+ */
+import { PageHeader } from "@components/features/page-header";
+import PostPage from "@components/features/posts/PostPage.astro";
+import { getSortedPosts } from "@utils/content-utils";
+import { slugifyTaxonomy } from "@utils/taxonomy-utils";
+
+import { PAGE_SIZE } from "../../constants/constants";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+
+export async function getStaticPaths() {
+	const posts = await getSortedPosts();
+	const byCategory = new Map();
+	for (const post of posts) {
+		const name = post.data.category;
+		if (!name) continue;
+		const slug = slugifyTaxonomy(name);
+		if (!byCategory.has(slug)) byCategory.set(slug, { name, posts: [] });
+		byCategory.get(slug).posts.push(post);
+	}
+	return [...byCategory.entries()].map(([slug, { name, posts: list }]) => ({
+		params: { category: slug },
+		props: { categoryName: name, posts: list },
+	}));
+}
+
+const { categoryName, posts } = Astro.props;
+
+// 复用 PostPage 需要的 page 形状（它只读 page.data）
+const page = {
+	data: posts,
+	currentPage: 1,
+	lastPage: 1,
+	start: 0,
+	end: posts.length - 1,
+	total: posts.length,
+	size: PAGE_SIZE,
+	url: { current: `/category/${slugifyTaxonomy(categoryName)}`, prev: undefined, next: undefined },
+};
+---
+
+<MainGridLayout title={categoryName}>
+	<script>
+		import("../../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<PageHeader title={categoryName} subtitle={`${posts.length} articles`} />
+			<PostPage page={page} />
+		</div>
+	</div>
+</MainGridLayout>

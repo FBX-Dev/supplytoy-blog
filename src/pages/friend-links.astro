@@ -1,0 +1,145 @@
+---
+/**
+ * `/friend-links` —— 导航里的 “Links” 指向的页面。
+ *
+ * 老站线上有：URL 是 `/friend-links`（**不是** `/friends`），标题 `Links`，
+ * 且进了 sitemap。导航五项里它是最后一项，所以 URL 必须保住。
+ * Mizuki 原版的对应页面在 `/friends` 且受 featurePages.friends 开关控制
+ * （本站已关），因此这里另建一个同 URL 的页面。
+ *
+ * 🔴 本页是后台（Sveltia CMS）两个集合的**唯一消费方**，改动前先看清楚：
+ *   - `src/data/friends.json`  ← 后台「友链 → 友链列表」写入，渲染成卡片
+ *   - `src/content/spec/friends.md` ← 后台「独立页面 → 友链页说明」写入，渲染成本页说明文字
+ * 这两个文件若没人读，用户在后台改完页面不会有任何反应 —— 所以卡片列表与
+ * 说明文字都必须真的渲染出来，不能写死在这里。
+ */
+import { getEntry, render } from "astro:content";
+import FriendCard from "@components/features/friends/FriendCard.astro";
+import { PageHeader } from "@components/features/page-header";
+import Markdown from "@components/misc/Markdown.astro";
+import { getShuffledFriendsList } from "../data/friends";
+import I18nKey from "../i18n/i18nKey";
+import { i18n } from "../i18n/translation";
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+
+// 标题保持老站原样（Links），不能换成 i18n 的 "Friends" ——
+// 老站线上标题就是 Links，且验收脚本按 "Links" 断言。
+const title = "Links";
+
+// 友链说明来自后台可编辑的 md。缺失时给一句兜底，不让整页构建失败。
+// ⚠️ 变量名必须首字母大写 —— Astro 只把小写标签当普通 HTML 元素，
+// 写成 `friendsContent` 会原样输出 <friendscontent> 标签，正文不渲染。
+const friendsPost = await getEntry("spec", "friends");
+const FriendsContent = friendsPost ? (await render(friendsPost)).Content : null;
+const friendsList = getShuffledFriendsList();
+const allTags = Array.from(new Set(friendsList.flatMap((item) => item.tags)));
+---
+
+<MainGridLayout title={title} titleSuffix={false}>
+	<script is:inline>
+		window.isFriendsPage = true;
+	</script>
+	<script>
+		import("../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<PageHeader title={title} />
+
+			{
+				friendsList.length > 0 && (
+					<div class="mb-6 space-y-3">
+						<div class="w-full">
+							<div class="relative">
+								<input
+									type="text"
+									id="friend-search"
+									placeholder={i18n(I18nKey.friendsSearchPlaceholder)}
+									class="w-full px-4 py-2 pl-10 rounded-lg bg-(--btn-regular-bg) text-black/90 dark:text-white/90 border border-black/10 dark:border-white/10 focus:outline-none focus:ring-2 focus:ring-(--primary)/50 transition-all duration-200"
+								/>
+							</div>
+						</div>
+
+						<div class="filter-container flex flex-wrap gap-2">
+							<button class="filter-tag active" data-tag="all">
+								{i18n(I18nKey.friendsFilterAll)}
+							</button>
+							{allTags.map((tag) => (
+								<button class="filter-tag" data-tag={tag}>
+									{tag}
+								</button>
+							))}
+						</div>
+					</div>
+				)
+			}
+
+			{
+				friendsList.length > 0 && (
+					<div
+						id="friends-grid"
+						class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 mb-6"
+					>
+						{friendsList.map((item) => (
+							<FriendCard friend={item} />
+						))}
+					</div>
+				)
+			}
+
+			<div id="no-results" class="hidden text-center py-12">
+				<p class="text-black/50 dark:text-white/50 text-lg">
+					{i18n(I18nKey.friendsNoResults)}
+				</p>
+			</div>
+
+			<Markdown class="prose dark:prose-invert max-w-none">
+				{FriendsContent ? <FriendsContent /> : <p>This page is reserved for the sites we link out to on a regular basis.</p>}
+			</Markdown>
+
+			<div id="friends-copy-success-text" style="display: none;">
+				{i18n(I18nKey.friendsCopySuccess)}
+			</div>
+		</div>
+	</div>
+
+	<script is:inline src="/js/friends-page-handler.js"></script>
+</MainGridLayout>
+
+<style>
+	#friend-search:focus {
+		box-shadow: 0 0 0 3px var(--primary) / 0.1;
+	}
+
+	.filter-container {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.filter-tag {
+		padding: 0.5rem 1rem;
+		border: 1px solid var(--line-divider);
+		border-radius: var(--radius-large);
+		background: var(--btn-regular-bg);
+		color: var(--btn-content);
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		white-space: nowrap;
+	}
+
+	.filter-tag:hover:not(.active) {
+		background: var(--btn-hover-bg);
+		border-color: var(--primary);
+		transform: translateY(-1px);
+	}
+
+	.filter-tag.active {
+		background: var(--primary);
+		color: white;
+		border-color: var(--primary);
+	}
+</style>

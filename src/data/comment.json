@@ -1,0 +1,22 @@
+{
+  "enable": false,
+  "system": "giscus",
+  "twikoo": {
+    "envId": "",
+    "lang": "en"
+  },
+  "giscus": {
+    "repo": "",
+    "repoId": "",
+    "category": "",
+    "categoryId": "",
+    "mapping": "pathname",
+    "strict": "0",
+    "reactionsEnabled": "1",
+    "emitMetadata": "0",
+    "inputPosition": "top",
+    "theme": "preferred_color_scheme",
+    "lang": "en",
+    "loading": "lazy"
+  }
+}

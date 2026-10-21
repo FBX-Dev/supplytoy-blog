@@ -1,0 +1,52 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ENABLE_CONTENT_SYNC: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.3
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build site
+        run: pnpm build
+
+      # 说明：这里不用 cloudflare/wrangler-action，直接用 npx 跑 wrangler 4。
+      # 原因：wrangler-action 会用 pnpm 去安装 wrangler@3.90.0，
+      # 而 pnpm 11 默认拦截依赖的构建脚本，报 ERR_PNPM_IGNORED_BUILDS 导致失败。
+      # npx 走 npm，默认允许构建脚本，且 wrangler 4 对 Workers 静态资源的支持最完整。
+      - name: Deploy to Cloudflare Workers
+        run: npx --yes wrangler@4 deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

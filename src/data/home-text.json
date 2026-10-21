@@ -1,0 +1,18 @@
+{
+  "enable": true,
+  "title": "SupplyToy",
+  "switchable": true,
+  "subtitles": [
+    "Toy reviews and buying guides for parents",
+    "We read the recall notices so you do not have to",
+    "Age labels are a starting point, not a verdict",
+    "Fewer toys, better play",
+    "Honest picks, including the ones to skip"
+  ],
+  "typewriter": {
+    "enable": true,
+    "speed": 100,
+    "deleteSpeed": 50,
+    "pauseTime": 2000
+  }
+}

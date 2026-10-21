@@ -1,0 +1,781 @@
+# ══════════════════════════════════════════════════════════════
+# Sveltia CMS 配置 —— SupplyToy 后台
+# 后台地址：https://supplytoy.com/admin/
+# 登录方式：GitHub 账号授权，或粘贴 GitHub Personal Access Token
+# ══════════════════════════════════════════════════════════════
+#
+# 改动须知（很重要）
+# ──────────────────────────────────────────────────────────────
+# 1. 本文件是后台的「数据库表结构」。字段名写错、或写了这个版本的
+#    Sveltia 不支持的选项，后台会直接整页报「配置无效」打不开。
+#    改完务必先在无头浏览器里打开 /admin/ 看一眼有没有报错再提交。
+#
+# 2. ⚠️ 后台保存时只会写「这里列出来的字段」。
+#    文章 frontmatter 里现有的 9 个键（title / published / description /
+#    image / tags / category / draft / pinned / lang）必须在这里都有对应
+#    字段，否则用户一保存就会被静默删掉，可能改变线上表现。
+#
+# 3. 数据结构约定：站点/文章配置放在 src/data/*.json，
+#    由 src/config/*.ts 读进来做兜底后再交给页面渲染。
+#    在这加字段 => 还要在对应的 config/*.ts 适配器里读出来，
+#    否则后台能填、但页面上没反应。
+
+backend:
+  name: github
+  # 🔴 这个值必须是 supplytoy 自己的仓库（形如 <owner>/<repo>）。
+  # 后台的每次保存 = 往这个仓库提交一次 commit，写错会直接改到别的站。
+  # 改完务必在 /admin/ 里打开确认能正常加载（配置错误会整页打不开）。
+  repo: FBX-Dev/supplytoy-blog
+  branch: main
+  auth_methods: [token]
+  commit_messages:
+    create: 'content: add {{collection}} "{{slug}}"'
+    update: 'content: update {{collection}} "{{slug}}"'
+    delete: 'content: delete {{collection}} "{{slug}}"'
+    uploadMedia: 'content: upload media "{{path}}"'
+    deleteMedia: 'content: delete media "{{path}}"'
+
+# 英文标题直接生成英文文件名（不加这两行会生成空文件名）
+slug:
+  encoding: unicode
+  clean_accents: false
+
+app_title: SupplyToy Admin
+site_url: https://supplytoy.com
+display_url: https://supplytoy.com
+logo_url: https://supplytoy.com/assets/home/default-logo.webp
+
+# 默认上传目录。各集合下面会覆盖成更细的子目录，
+# 这样媒体库按用途分开，不会所有图都堆在一个文件夹里。
+media_folder: public/images/uploads
+public_folder: /images/uploads
+
+collections:
+  # ══════════════════════════════════════════════════════════
+  # 文章
+  # ══════════════════════════════════════════════════════════
+  - name: posts
+    label: 文章
+    label_singular: 文章
+    icon: article
+    description: >-
+      「编辑工作流」已开启：保存会先建一个 sveltia-cms/… 分支和草稿 PR，文章暂时不会上线；
+      在列表里把它从「草稿」推到「待审核 / 可发布」并合并，才会合进 main 并触发上线（约 2 分钟）。
+      想恢复成「保存即上线」，把下面 posts 里的 publish_mode 这一行删掉即可。
+      另外登录用的 GitHub 令牌需要带「Pull requests 读写」权限，否则发布这一步会失败。
+    folder: src/content/posts
+    create: true
+    delete: true
+    publish_mode: editorial_workflow
+    media_folder: public/images/uploads/posts
+    public_folder: /images/uploads/posts
+    slug: '{{slug}}'
+    extension: md
+    format: frontmatter
+    summary: '{{title}}'
+    sortable_fields:
+      fields: [published, title]
+      default:
+        field: published
+        direction: descending
+    view_filters:
+      filters:
+        - label: 只看置顶
+          name: pinned_only
+          field: pinned
+          eq: true
+        - label: 只看草稿
+          name: hidden_only
+          field: draft
+          eq: true
+    view_groups:
+      groups:
+        - label: 分类
+          name: by_category
+          field: category
+        - label: 年份
+          name: by_year
+          field: published
+          pattern: '\d{4}'
+    fields:
+      - label: 标题
+        name: title
+        widget: string
+        hint: 列表和分享卡上显示的标题。别超过 30 字。
+      - label: 发布日期
+        name: published
+        widget: datetime
+        date_format: 'YYYY-MM-DD'
+        time_format: false
+        format: 'YYYY-MM-DD'
+        hint: 决定文章在列表里的排序位置，也用于生成 URL 无关的归档分组。
+      - label: 摘要
+        name: description
+        widget: text
+        required: false
+        hint: 一两句话，用在列表页预览、搜索结果和分享卡。留空则截取正文开头。
+      - label: 封面图
+        name: image
+        widget: image
+        required: false
+        choose_url: false
+        hint: 可选。不传也可以，文章页照样正常显示。
+      - label: 分类
+        name: category
+        widget: select
+        required: false
+        default: Toy Reviews
+        options:
+          - Toy Reviews
+          - Buying Guides
+          - Gift Ideas
+          - Ages & Stages
+          - Play & Learning
+          - Safety
+        hint: 全站只用这 6 个分类，不要自己新增，否则归档页会出现只有一个条目的分类。
+      - label: 标签
+        name: tags
+        widget: list
+        required: false
+        default: []
+        label_singular: 标签
+        hint: 每行一个，建议 2–5 个。小写英文（如 toy safety、choking hazard）。
+      - label: 置顶
+        name: pinned
+        widget: boolean
+        default: false
+        hint: 打开后固定在首页最前面。
+      - label: 语言
+        name: lang
+        widget: select
+        required: false
+        default: en
+        options:
+          - en
+          - zh_CN
+          - zh_TW
+          - ja
+        hint: 本站内容都是英文，保持 en 即可。
+      - label: 站点隐藏（草稿）
+        name: draft
+        widget: boolean
+        default: false
+        hint: >-
+          打开后文章会被构建但不出现在站点任何位置。用于「先写一半、想留在 main 上但不公开」。
+          如果只是不想现在上线，用上面的工作流把它停在「草稿」状态更干净。
+      - label: 正文
+        name: body
+        widget: markdown
+        hint: 支持 Markdown。图片直接从上面的媒体库插入。
+
+  # ══════════════════════════════════════════════════════════
+  # 独立页面
+  # ══════════════════════════════════════════════════════════
+  - name: pages
+    label: 独立页面
+    icon: description
+    media_folder: public/images/uploads/pages
+    public_folder: /images/uploads/pages
+    files:
+      - label: 关于本站
+        name: about
+        icon: info
+        file: src/content/spec/about.md
+        fields:
+          - label: 正文
+            name: body
+            widget: markdown
+            hint: ⚠️ 本站**没有** /about 页面（老站线上就是 404，导航里也没有入口），所以这里的正文目前不会出现在任何页面上。保留仅为将来若开通关于页时备用 —— 想让文字真的显示出来，得先新建 src/pages/about.astro。
+      - label: 友链页说明
+        name: friends_intro
+        icon: link
+        file: src/content/spec/friends.md
+        fields:
+          - label: 正文
+            name: body
+            widget: markdown
+            hint: 显示在友链页（/friend-links）卡片列表**下方**的说明文字，比如「怎么申请友链」「本站友链要求」。改完 1–2 分钟上线。
+
+  # ══════════════════════════════════════════════════════════
+  # 友链
+  # ══════════════════════════════════════════════════════════
+  - name: friends
+    label: 友链
+    icon: group
+    description: 友链页（/friend-links）的卡片列表。站点地址必须是完整网址（http/https 开头），否则这张卡片会被自动丢弃。
+    files:
+      - name: friends
+        label: 友链列表
+        file: src/data/friends.json
+        media_folder: public/images/uploads/friends
+        public_folder: /images/uploads/friends
+        fields:
+          - label: 友链
+            name: list
+            widget: list
+            label_singular: 友链
+            summary: '{{fields.title}} — {{fields.siteurl}}'
+            hint: 拖动条目左侧的手柄可以调整显示顺序（页面本身是随机排序的）。
+            fields:
+              - label: 站点名称
+                name: title
+                widget: string
+              - label: 站点地址
+                name: siteurl
+                widget: string
+                hint: 必须写完整地址，例如 https://example.com/ 。不写 http 开头的会被丢弃。
+              - label: 图标
+                name: imgurl
+                widget: string
+                required: false
+                hint: 头像或 favicon 的图片地址，可以填完整外链，也可以用本站媒体库上传后的路径。
+              - label: 简介
+                name: desc
+                widget: text
+                required: false
+                hint: 一句话介绍对方站点。
+              - label: 标签
+                name: tags
+                widget: list
+                required: false
+                default: []
+                label_singular: 标签
+                hint: 用于友链页顶部的标签筛选按钮。
+
+  # ══════════════════════════════════════════════════════════
+  # 站点设置
+  # ══════════════════════════════════════════════════════════
+  - name: settings
+    label: 站点设置
+    icon: settings
+    description: >-
+      站点级配置。保存后提交到 GitHub 并自动重新构建发布（约 2 分钟生效）。
+      这些值最终由 src/config/*.ts 读出来，填错类型会自动退回默认值，不会导致整站白屏。
+    files:
+      # ── 站点信息 ──────────────────────────────────────
+      - label: 站点信息
+        name: site_info
+        icon: tune
+        file: src/data/site-info.json
+        fields:
+          - label: 站点标题
+            name: title
+            widget: string
+            hint: 浏览器标签、SEO 标题、页脚等处使用。
+          - label: 副标题
+            name: subtitle
+            widget: string
+            required: false
+          - label: 站点网址
+            name: siteURL
+            widget: string
+            hint: 必须写完整地址且以斜杠结尾，例如 https://supplytoy.com/ 。写错会影响 canonical、RSS 和 sitemap。
+          - label: 建站日期
+            name: siteStartDate
+            widget: string
+            required: false
+            hint: 格式 2026-09-20，用于计算站点运行天数。
+          - label: 时区
+            name: timeZone
+            widget: string
+            required: false
+            default: Asia/Shanghai
+          - label: 默认语言
+            name: lang
+            widget: select
+            default: zh_CN
+            options:
+              - zh_CN
+              - zh_TW
+              - en
+              - ja
+              - ko
+              - es
+              - th
+              - vi
+              - tr
+              - id
+          - label: 站点关键词
+            name: keywords
+            widget: list
+            required: false
+            default: []
+            label_singular: 关键词
+            hint: 用于 SEO。每行一个，3–8 个即可。
+          - label: 主题色
+            name: themeColor
+            widget: object
+            collapsed: true
+            summary: '色相 {{fields.hue}}'
+            fields:
+              - label: 色相
+                name: hue
+                widget: number
+                value_type: int
+                min: 0
+                max: 360
+                default: 205
+                hint: 0–360。205 是本站在用的蓝色；180 是青色。
+              - label: 固定不随昼夜切换
+                name: fixed
+                widget: boolean
+                default: false
+          - label: 顶栏标题
+            name: navbarTitle
+            widget: object
+            collapsed: true
+            fields:
+              - label: 显示方式
+                name: mode
+                widget: select
+                default: text-icon
+                options:
+                  - text-icon
+                  - logo
+                hint: text-icon＝图标 + 文字；logo＝只显示图片。
+              - label: 标题文字
+                name: text
+                widget: string
+                required: false
+              - label: 图标路径
+                name: icon
+                widget: string
+                required: false
+                hint: 相对 public 目录，例如 assets/home/home.webp
+              - label: Logo 路径
+                name: logo
+                widget: string
+                required: false
+          - label: 功能页面开关
+            name: featurePages
+            widget: object
+            collapsed: true
+            hint: 关闭的页面不会出现在导航栏，直接访问也会跳 404。本站是商业导购站，主题自带的个人页面全部关闭。
+            fields:
+              - label: 友链
+                name: friends
+                widget: boolean
+                default: false
+              - label: 番剧
+                name: anime
+                widget: boolean
+                default: false
+              - label: 日记
+                name: diary
+                widget: boolean
+                default: false
+              - label: 项目
+                name: projects
+                widget: boolean
+                default: false
+              - label: 技能
+                name: skills
+                widget: boolean
+                default: false
+              - label: 时间线
+                name: timeline
+                widget: boolean
+                default: false
+              - label: 相册
+                name: albums
+                widget: boolean
+                default: false
+              - label: 设备
+                name: devices
+                widget: boolean
+                default: false
+              - label: AI 工具
+                name: aiTools
+                widget: boolean
+                default: false
+          - label: 文章列表布局
+            name: postListLayout
+            widget: object
+            collapsed: true
+            fields:
+              - label: 默认布局
+                name: defaultMode
+                widget: select
+                default: list
+                options:
+                  - list
+                  - grid
+                hint: list＝单列大卡片；grid＝双列网格。侧栏开启双侧边栏时 grid 不可用。
+              - label: 允许访客切换布局
+                name: allowSwitch
+                widget: boolean
+                default: true
+              - label: 显示分类筛选条
+                name: categoryBarEnable
+                widget: boolean
+                default: true
+          - label: 标签使用新样式
+            name: tagNewStyle
+            widget: boolean
+            default: false
+            hint: 打开＝悬停高亮样式；关闭＝外框常亮样式。
+          - label: 默认壁纸模式
+            name: wallpaperDefaultMode
+            widget: select
+            default: banner
+            options:
+              - banner
+              - fullscreen
+              - overlay
+              - none
+          - label: 手机端模式切换按钮
+            name: mobileModeSwitch
+            widget: select
+            default: both
+            options:
+              - off
+              - mobile
+              - desktop
+              - both
+            hint: 控制手机端是否显示「网页版 / 手机版」切换入口。
+
+      # ── 首页文案 ──────────────────────────────────────
+      - label: 首页文案
+        name: home_text
+        icon: home
+        file: src/data/home-text.json
+        fields:
+          - label: 显示首页大标题
+            name: enable
+            widget: boolean
+            default: true
+          - label: 大标题
+            name: title
+            widget: string
+            default: SupplyToy
+          - label: 允许访客切换文案
+            name: switchable
+            widget: boolean
+            default: true
+          - label: 副标题轮播
+            name: subtitles
+            widget: list
+            label_singular: 副标题
+            default: []
+            hint: 每行一条，会轮流显示。全部留空则会退回默认文案。
+          - label: 打字机效果
+            name: typewriter
+            widget: object
+            collapsed: true
+            fields:
+              - label: 启用
+                name: enable
+                widget: boolean
+                default: true
+              - label: 打字速度（毫秒）
+                name: speed
+                widget: number
+                value_type: int
+                min: 0
+                max: 2000
+                default: 100
+              - label: 删除速度（毫秒）
+                name: deleteSpeed
+                widget: number
+                value_type: int
+                min: 0
+                max: 2000
+                default: 50
+              - label: 显示后暂停（毫秒）
+                name: pauseTime
+                widget: number
+                value_type: int
+                min: 0
+                max: 60000
+                default: 2000
+
+      # ── 作者资料 ──────────────────────────────────────
+      - label: 作者资料
+        name: profile
+        icon: person
+        file: src/data/profile.json
+        fields:
+          - label: 作者名
+            name: name
+            widget: string
+            default: SupplyToy
+            hint: 全站作者名的唯一来源，会出现在侧栏卡片、页脚版权、RSS、分享卡、OG 图等 9 处。
+          - label: 一句话简介
+            name: bio
+            widget: text
+            required: false
+          - label: 头像
+            name: avatar
+            widget: string
+            required: false
+            hint: 相对 src 目录，例如 assets/images/avatar.webp 。以 / 开头则相对 public 目录。
+          - label: 简介打字机
+            name: typewriter
+            widget: object
+            collapsed: true
+            fields:
+              - label: 启用
+                name: enable
+                widget: boolean
+                default: true
+              - label: 打字速度（毫秒）
+                name: speed
+                widget: number
+                value_type: int
+                min: 0
+                max: 2000
+                default: 80
+          - label: 社交链接
+            name: links
+            widget: list
+            label_singular: 社交链接
+            default: []
+            summary: '{{fields.name}} — {{fields.url}}'
+            hint: name / url / icon 缺一个这条就会整条不显示。
+            fields:
+              - label: 名称
+                name: name
+                widget: string
+              - label: 链接
+                name: url
+                widget: string
+                hint: 例如 https://github.com/yourname 或 mailto:you@example.com
+              - label: 图标
+                name: icon
+                widget: string
+                hint: >-
+                  Iconify 图标名，只能填 material-symbols / mdi / fa7-solid / fa7-regular /
+                  fa7-brands / simple-icons 里真实存在的名字，否则会被静默丢弃。
+                  例如 fa7-brands:github 、fa7-solid:envelope 。
+                  挑图标：https://icon-sets.iconify.design/
+
+      # ── 侧栏公告 ──────────────────────────────────────
+      - label: 侧栏公告
+        name: announcement
+        icon: campaign
+        file: src/data/announcement.json
+        fields:
+          - label: 标题
+            name: title
+            widget: string
+            required: false
+            hint: 留空则使用主题内置的「公告」字样。
+          - label: 内容
+            name: content
+            widget: text
+          - label: 图标
+            name: icon
+            widget: string
+            required: false
+            hint: 可选 Iconify 图标名，留空则不显示图标。
+          - label: 类型
+            name: type
+            widget: select
+            default: info
+            options:
+              - info
+              - warning
+              - success
+              - error
+            hint: 决定公告条的配色。
+          - label: 允许关闭
+            name: closable
+            widget: boolean
+            default: true
+          - label: 附带链接
+            name: link
+            widget: object
+            collapsed: true
+            fields:
+              - label: 启用
+                name: enable
+                widget: boolean
+                default: false
+              - label: 链接文字
+                name: text
+                widget: string
+                required: false
+              - label: 链接地址
+                name: url
+                widget: string
+                required: false
+                hint: 站内写 /posts 这种格式，站外写完整地址。
+              - label: 是外部链接
+                name: external
+                widget: boolean
+                default: false
+
+      # ── 评论系统 ──────────────────────────────────────
+      - label: 评论系统
+        name: comment
+        icon: chat
+        file: src/data/comment.json
+        fields:
+          - label: 启用评论
+            name: enable
+            widget: boolean
+            default: false
+            hint: >-
+              本站是导购站，评论默认关闭（个人博客功能已精简掉）。若日后要开：
+              giscus 需要先把 giscus App 装到自己的公开仓库并打开 Discussions，
+              把下方 ID 填好再打开这里；Twikoo 需要先有一个可用的 envId。
+              没准备好就打开的话，页面会渲染出空的评论区。
+          - label: 使用哪个系统
+            name: system
+            widget: select
+            default: twikoo
+            options:
+              - twikoo
+              - giscus
+          - label: Twikoo
+            name: twikoo
+            widget: object
+            collapsed: true
+            fields:
+              - label: 环境地址 envId
+                name: envId
+                widget: string
+                required: false
+                hint: 自建 Twikoo 服务地址，例如 https://twikoo.example.com 。填了才能用 Twikoo。
+              - label: 界面语言
+                name: lang
+                widget: string
+                required: false
+                default: zh-CN
+          - label: Giscus
+            name: giscus
+            widget: object
+            collapsed: true
+            hint: 用 GitHub Discussions 做评论。仓库要公开，并在 giscus.app 上装好 App 拿到 repoId / categoryId。
+            fields:
+              - label: 仓库
+                name: repo
+                widget: string
+                required: false
+                hint: 格式 用户名/仓库名
+              - label: 仓库 ID
+                name: repoId
+                widget: string
+                required: false
+              - label: 分类
+                name: category
+                widget: string
+                required: false
+                default: Announcements
+              - label: 分类 ID
+                name: categoryId
+                widget: string
+                required: false
+              - label: 路径映射
+                name: mapping
+                widget: string
+                required: false
+                default: pathname
+              - label: strict
+                name: strict
+                widget: string
+                required: false
+                default: '0'
+              - label: reactionsEnabled
+                name: reactionsEnabled
+                widget: string
+                required: false
+                default: '1'
+              - label: emitMetadata
+                name: emitMetadata
+                widget: string
+                required: false
+                default: '0'
+              - label: 输入框位置
+                name: inputPosition
+                widget: string
+                required: false
+                default: top
+              - label: 主题
+                name: theme
+                widget: string
+                required: false
+                default: preferred_color_scheme
+              - label: 界面语言
+                name: lang
+                widget: string
+                required: false
+                default: zh-CN
+              - label: 加载方式
+                name: loading
+                widget: string
+                required: false
+                default: lazy
+
+      # ── 页脚与备案 ────────────────────────────────────
+      - label: 页脚与备案
+        name: footer
+        icon: arrow_downward
+        file: src/data/footer.json
+        fields:
+          - label: 启用自定义页脚
+            name: enable
+            widget: boolean
+            default: false
+            hint: 打开后会用下面的 HTML 替换页脚默认内容。可以放备案号。
+          - label: 自定义 HTML
+            name: customHtml
+            widget: text
+            required: false
+            hint: 例如：<span>聊ICP备00000000号</span> 。内容会原样注入页面，只填自己可信的代码。
+
+      # ── 顶部导航菜单 ──────────────────────────────────
+      - label: 顶部导航菜单
+        name: navigation
+        icon: menu
+        file: src/data/navigation.json
+        fields:
+          - label: 菜单项
+            name: links
+            label_singular: 菜单项
+            widget: list
+            min: 1
+            summary: '{{fields.name}}  →  {{fields.url}}'
+            hint: 上下的顺序＝菜单从左到右的顺序，拖动条目左侧的手柄可以调整顺序。
+            fields:
+              - label: 名称
+                name: name
+                widget: string
+                hint: 菜单上显示的文字，尽量短（建议 2–6 个字）
+              - label: 链接
+                name: url
+                widget: string
+                hint: 站内页面写 /posts 这种格式（以斜杠开头，**不要**加结尾斜杠，加了会多一跳 307）。本站可用：/ 首页、/posts 全部文章、/categories 分类、/tags 话题、/friend-links 链接。跳站外要写完整地址，例如 https://www.amazon.com
+              - label: 图标
+                name: icon
+                widget: string
+                required: false
+                default: ''
+                hint: Iconify 图标名，例如 material-symbols:home。只能填 material-symbols / mdi / fa7-solid / fa7-regular / fa7-brands / simple-icons 里真实存在的图标，填错就不显示图标。屏幕窄的时候菜单只显示图标、隐藏文字，所以建议每项都填。挑图标：https://icon-sets.iconify.design/
+              - label: 在新标签页打开（外链）
+                name: external
+                widget: boolean
+                default: false
+                hint: 跳站外建议开启。开启后会在新标签页打开，并显示一个外链小标识
+              - label: 子菜单
+                name: children
+                widget: list
+                required: false
+                summary: '{{fields.name}}'
+                hint: 留空就是普通菜单项；填了会变成鼠标悬停展开的下拉菜单
+                fields:
+                  - label: 名称
+                    name: name
+                    widget: string
+                  - label: 链接
+                    name: url
+                    widget: string
+                  - label: 图标
+                    name: icon
+                    widget: string
+                    required: false
+                    default: ''
+                  - label: 在新标签页打开（外链）
+                    name: external
+                    widget: boolean
+                    default: false

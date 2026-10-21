@@ -1,0 +1,64 @@
+# Cloudflare Workers 静态资源响应头规则。
+#
+# ⚠️ 只作用于**静态资源**响应（本文件会被 Cloudflare 解析，自身不会被当作文件提供）。
+# 由 Worker 脚本动态生成的响应**不读这里** —— 那种要直接写在 Response 头里。
+# 见 https://developers.cloudflare.com/workers/static-assets/headers/
+#
+# 语法要点：`! 头名` 表示先 detach 掉继承来的同名头，再设新值。
+# 同名头多重匹配会被**逗号拼接**，所以覆盖类规则必须带 `!`。
+
+# ── AdSense 授权卖方文件 ──────────────────────────────────────
+# 必须按纯文本返回，不能带 HTML、不能被当成页面解析。
+# 否则 AdSense 的 ads.txt 校验会判「文件格式错误」。
+/ads.txt
+  Content-Type: text/plain
+
+# ── 页面：不缓存，后台发布后刷新即可见 ────────────────────────
+# 静态资源仍走下面的长期缓存规则。
+# ⚠️ 这条是迁移后「内容能立刻上线」的关键：旧站是 SSR + 边缘缓存 1 小时，
+# 静态站若也缓存 HTML，改一篇文要等缓存过期才可见。
+/*
+  Cache-Control: public, max-age=0, must-revalidate
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+# ── 带内容哈希的构建产物：可长期强缓存 ────────────────────────
+/_astro/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+/pio/*
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+/images/*
+  ! Cache-Control
+  Cache-Control: public, max-age=86400
+
+# ── 后台：不进索引，且不缓存 ──────────────────────────────────
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+  ! Cache-Control
+  Cache-Control: no-store
+
+# ── 字体：文件名含哈希，可长期强缓存 ──────────────────────────
+/*.woff2
+  ! Cache-Control
+  Cache-Control: public, max-age=31536000, immutable
+
+# ── 订阅源：允许跨域读取 ──────────────────────────────────────
+/atom.xml
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET
+  Access-Control-Max-Age: 86400
+
+/rss.xml
+  Access-Control-Allow-Origin: *
+  Access-Control-Allow-Methods: GET
+  Access-Control-Max-Age: 86400

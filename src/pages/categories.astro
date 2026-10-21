@@ -1,0 +1,45 @@
+---
+/**
+ * `/categories` —— 分类总览。
+ *
+ * 老站线上有这个页面（标题 `Categories — SupplyToy`），且是 6 个 `/category/<slug>`
+ * 的入口，属于要保留的既有 URL。Mizuki 原版把分类指向 `/archive/?category=X`
+ * 查询参数，那样会把已有的 `/category/<slug>` 收录全部作废，所以这里另建真页面。
+ */
+import { PageHeader } from "@components/features/page-header";
+import { getCategoryList } from "@utils/content-utils";
+import { slugifyTaxonomy } from "@utils/taxonomy-utils";
+
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+
+const categories = await getCategoryList();
+
+// 老站标题格式：`Categories — SupplyToy`（em dash，非连字符）
+const title = "Categories";
+---
+
+<MainGridLayout title={title}>
+	<script>
+		import("../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<PageHeader title={title} />
+
+			<div class="grid gap-3 sm:grid-cols-2">
+				{
+					categories.map((c) => (
+						<a
+							href={`/category/${slugifyTaxonomy(c.name)}`}
+							class="card-base flex items-center justify-between px-5 py-4 transition-colors duration-200 hover:text-(--primary)"
+						>
+							<span class="font-medium">{c.name.trim()}</span>
+							<span class="text-sm opacity-60">{c.count}</span>
+						</a>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</MainGridLayout>

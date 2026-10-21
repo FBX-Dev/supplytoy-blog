@@ -1,0 +1,46 @@
+{
+  "title": "SupplyToy",
+  "subtitle": "Toy Reviews and Buying Guides for Parents",
+  "siteURL": "https://supplytoy.com/",
+  "siteStartDate": "2026-09-27",
+  "timeZone": "America/New_York",
+  "lang": "en",
+  "keywords": [
+    "toy reviews",
+    "buying guides",
+    "gift ideas",
+    "toy safety",
+    "kids toys",
+    "ages and stages"
+  ],
+  "themeColor": {
+    "hue": 205,
+    "fixed": false
+  },
+  "navbarTitle": {
+    "mode": "text",
+    "text": "SupplyToy",
+    "icon": "assets/home/home.webp",
+    "logo": "assets/home/default-logo.webp"
+  },
+  "featurePages": {
+    "anime": false,
+    "diary": false,
+    "friends": false,
+    "projects": false,
+    "skills": false,
+    "timeline": false,
+    "albums": false,
+    "devices": false,
+    "aiTools": false
+  },
+  "postListLayout": {
+    "defaultMode": "list",
+    "enable": true,
+    "allowSwitch": false,
+    "categoryBarEnable": true
+  },
+  "tagNewStyle": false,
+  "wallpaperDefaultMode": "banner",
+  "mobileModeSwitch": "none"
+}

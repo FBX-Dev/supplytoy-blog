@@ -1,0 +1,39 @@
+{
+  "links": [
+    {
+      "name": "Home",
+      "url": "/",
+      "icon": "material-symbols:home",
+      "external": false,
+      "children": []
+    },
+    {
+      "name": "Posts",
+      "url": "/posts",
+      "icon": "material-symbols:article",
+      "external": false,
+      "children": []
+    },
+    {
+      "name": "Categories",
+      "url": "/categories",
+      "icon": "material-symbols:category",
+      "external": false,
+      "children": []
+    },
+    {
+      "name": "Topics",
+      "url": "/tags",
+      "icon": "material-symbols:tag",
+      "external": false,
+      "children": []
+    },
+    {
+      "name": "Links",
+      "url": "/friend-links",
+      "icon": "material-symbols:link",
+      "external": false,
+      "children": []
+    }
+  ]
+}

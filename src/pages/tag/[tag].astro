@@ -1,0 +1,95 @@
+---
+/**
+ * `/tag/<slug>` —— 单个标签的文章列表。
+ *
+ * 老站线上有 46 个这样的页面（= 302 个标签中 ≥2 篇文章的那些），全在 sitemap 里。
+ * 已用线上 sitemap 的 46 个 slug 做过全量比对，本页产出的 slug 与之一一对应
+ * （0 缺失 / 0 多余），保证既有收录不丢。
+ *
+ * 单篇文章的标签页**照常生成**（老站也是 200），但带 `noindex, follow`
+ * 且不进 sitemap —— 避免大量近空白页面稀释整站质量。
+ * 标题格式照抄老站：`Toy safety — SupplyToy`（em dash，用标签显示名）。
+ */
+import { PageHeader } from "@components/features/page-header";
+import PostPage from "@components/features/posts/PostPage.astro";
+import { getSortedPosts } from "@utils/content-utils";
+import {
+	displayTagName,
+	MIN_TAG_POSTS_FOR_INDEX,
+	slugifyTaxonomy,
+} from "@utils/taxonomy-utils";
+
+import { PAGE_SIZE } from "../../constants/constants";
+import MainGridLayout from "../../layouts/MainGridLayout.astro";
+
+export async function getStaticPaths() {
+	const posts = await getSortedPosts();
+
+	/**
+	 * 🔴 必须按**标签原文**分组，不能按 slug 分组。
+	 *
+	 * 源里同时存在 `ride-on toys`（2 篇）和 `ride on toys`（1 篇）两个不同标签，
+	 * 它们的 slug 都是 `ride-on-toys`。若按 slug 做 key，两个标签会合并成一页 3 篇，
+	 * 而线上该页是 2 篇（老站按原文精确匹配）→ 会凭空多出一篇，与线上不一致。
+	 *
+	 * 所以先按原文分组，再把 slug 相同的组做「取并集」式合并
+	 * （slug 相同 → 同一个 URL 只能有一个页面）。
+	 */
+	const byName = new Map();
+	for (const post of posts) {
+		for (const tag of post.data.tags ?? []) {
+			const name = tag.trim();
+			if (!name) continue;
+			if (!byName.has(name)) byName.set(name, []);
+			byName.get(name).push(post);
+		}
+	}
+
+	// 按 slug 归并；同一 slug 下若出现多个原文，以**文章数最多**的那个原文
+	// 作为该页的显示名与统计口径（与线上老站的第一优先标签一致）。
+	const bySlug = new Map();
+	for (const [name, list] of byName) {
+		const slug = slugifyTaxonomy(name);
+		const prev = bySlug.get(slug);
+		if (!prev || list.length > prev.posts.length) {
+			bySlug.set(slug, { name, posts: list });
+		}
+	}
+
+	return [...bySlug.entries()].map(([slug, { name, posts: list }]) => ({
+		params: { tag: slug },
+		props: { tagName: name, posts: list },
+	}));
+}
+
+const { tagName, posts } = Astro.props;
+
+const slug = slugifyTaxonomy(tagName);
+const noindex = posts.length < MIN_TAG_POSTS_FOR_INDEX;
+// 标题/H1 用首字母大写的显示名（老站规则），slug 与原始名保持小写
+const displayName = displayTagName(tagName);
+
+const page = {
+	data: posts,
+	currentPage: 1,
+	lastPage: 1,
+	start: 0,
+	end: posts.length - 1,
+	total: posts.length,
+	size: PAGE_SIZE,
+	url: { current: `/tag/${slug}`, prev: undefined, next: undefined },
+};
+---
+
+<MainGridLayout title={displayName} noindex={noindex}>
+	<script>
+		import("../../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<PageHeader title={displayName} subtitle={`${posts.length} articles`} />
+			<PostPage page={page} />
+		</div>
+	</div>
+</MainGridLayout>

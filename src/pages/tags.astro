@@ -1,0 +1,44 @@
+---
+/**
+ * `/tags` —— 标签总览。
+ *
+ * 老站线上有（标题 `Tags — SupplyToy`），列出全部 302 个标签。
+ * 只有 ≥2 篇文章的 46 个标签有独立页并进 sitemap，其余标签在本页仍列出、
+ * 但指向的页面带 `noindex, follow`（见 `tag/[tag].astro`）。
+ */
+import { PageHeader } from "@components/features/page-header";
+import { getTagList } from "@utils/content-utils";
+import { slugifyTaxonomy } from "@utils/taxonomy-utils";
+
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+
+const tags = await getTagList();
+
+const title = "Tags";
+---
+
+<MainGridLayout title={title}>
+	<script>
+		import("../scripts/right-sidebar-layout.js");
+	</script>
+
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<PageHeader title={title} subtitle={`${tags.length} topics`} />
+
+			<div class="flex gap-2 flex-wrap">
+				{
+					tags.map((t) => (
+						<a
+							href={`/tag/${slugifyTaxonomy(t.name)}`}
+							class="px-3 py-1.5 rounded-lg text-sm transition-colors duration-200 hover:text-(--primary) bg-(--btn-regular-bg)"
+						>
+							{t.name.trim()}
+							<span class="text-xs opacity-60 ml-1">{t.count}</span>
+						</a>
+					))
+				}
+			</div>
+		</div>
+	</div>
+</MainGridLayout>

@@ -1,0 +1,70 @@
+---
+/**
+ * GoogleScripts.astro —— GA4 + Google AdSense 的**静态**注入组件。
+ *
+ * ⚠️ 这个组件与同目录的 `AnalyticsScripts.astro` 有本质区别，别混用、别合并：
+ *
+ * - `AnalyticsScripts.astro` 走的是 `requestIdleCallback` / 用户交互后
+ *   `document.createElement("script")` **动态插入**。那套对 GTM / Clarity 可以，
+ *   对 AdSense **不行** —— AdSense 的站点验证会直接抓页面源码找那段 `<script>`，
+ *   动态插入的标签在源码里根本不存在，会被判「找不到代码」。
+ *
+ * - 本组件用 `is:inline` 让 Astro **原样输出**为 HTML 源码里的真实 `<script>` 标签，
+ *   不做打包、不做改名、不做 defer 注入。view-source 必须能直接看到。
+ *
+ * 三个必须守住的点（改动时别破）：
+ * 1. **必须 `is:inline`**。去掉它 Astro 会把脚本抽成外部 chunk，
+ *    源码里只剩 `<script type="module" src="/_astro/xxx.js">`，AdSense 认不出。
+ * 2. **`crossorigin="anonymous"` 必须原样保留**，AdSense 要求，用于拿到可读的错误堆栈。
+ * 3. **发布商 ID 必须与 /ads.txt 里声明的 `pub-...` 一致**，
+ *    两处不一致会被判「授权卖方文件与站点不匹配」。
+ *
+ * 另外：AdSense **故意不做生产环境门控**。这段脚本必须出现在每条公开页面的
+ * 原始 HTML 里，少一个条件就少一个它被漏掉的机会。本地注入没有副作用 ——
+ * Google 对未审核域名不会投放，只是多一次脚本请求。
+ * （GA4 相反，它做了 `import.meta.env.PROD` 门控，避免本地开发污染统计数据。）
+ */
+
+interface Props {
+	/** GA4 衡量 ID，形如 G-XXXXXXXXXX。为空则不注入。 */
+	ga4Id?: string;
+	/** 是否注入 AdSense 引导脚本。 */
+	adsense?: boolean;
+}
+
+const {
+	// GA4 衡量 ID（SupplyToy 站点级属性）
+	ga4Id = "G-NLZVKSJ9HB",
+	// AdSense 自动广告只需要这一段引导脚本；广告**位置**由 AdSense 后台的
+	// 「自动广告」开关决定，页面里不需要任何 <ins class="adsbygoogle"> 容器。
+	adsense = true,
+} = Astro.props;
+
+// 与 public/ads.txt 的 `pub-3948558780581083` 必须是同一个账号。
+const ADSENSE_CLIENT_ID = "ca-pub-3948558780581083";
+const ADSENSE_SRC = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`;
+
+// GA4 只在生产构建注入。静态站没有运行时判断，只能在构建期决定。
+const ga4 = import.meta.env.PROD ? ga4Id?.trim() : undefined;
+---
+
+{
+	ga4 && (
+		<>
+			<script
+				is:inline
+				async
+				src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4)}`}
+			/>
+			<script is:inline>
+				{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ga4}');`}
+			</script>
+		</>
+	)
+}
+
+{
+	adsense && (
+		<script is:inline async src={ADSENSE_SRC} crossorigin="anonymous" />
+	)
+}

@@ -67,6 +67,11 @@ src/data/bilibili-data.json
 # 本地校验脚本与临时产物（无头浏览器截图、打包产物、chrome profile）
 _tmp_verify/
 
+# AI 出图的原始 PNG 与中间产物：几十 MB，绝不能被提交。
+# 产物已转成 webp 落到 public/ 与 src/assets/，源图只留本地备重出。
+_tmp_images/
+_tmp_*.log
+
 # 本地回收站：dist_* 快照、对比样本、被删路由备份。
 # ⚠️ 体积可到 1.5G，绝不能被提交。里面 www-redirect-rule.json 是
 # zone Redirect Rule 的唯一本地备份，**不要删文件**，只是不提交。

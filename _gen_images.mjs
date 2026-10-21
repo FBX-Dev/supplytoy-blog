@@ -46,24 +46,28 @@ function pickPng(dir) {
 }
 
 /**
- * 生成「文字带遮罩」SVG：中心一条横向柔和暗带。
+ * 生成「文字带遮罩」SVG：一条横向柔和暗带，中心对准**真实标题位置**。
  * 用深蓝灰 #0f172a（贴合站点主色 hue 205）而不是纯黑，避免发死。
  *
- * 🔴 渐变 stop 的位置/不透明度是扫描出来的，别随手改：
- *   衰减太快（如 42%→0.82、74%→0.34）时 alpha 0.34 只能把对比度拉到 1.69:1；
- *   用下面这组（55%→0.9、80%→0.35）时 alpha 0.45 能到 4.14:1，且整图亮度仍有 186。
+ * 🔴 参数全部来自实测，别随手改：
+ *   - 横幅真实渲染高度 **702px（65vh）**，不是配置里写的 35vh；
+ *     图片 1920×1080 被 object-cover 裁中间 → 可见带 = 中间 65%（图片内 y 17.5%~82.5%）。
+ *   - 文章页标题实测在页面 y **306~354px** → 占横幅 43.6%~50.4%
+ *     → 换算到图片内 y = 17.5% + 0.65×(43.6%..50.4%) = **45.8%~50.3%**，留余量取 42%~54%。
+ *   - 强度：alpha 0.45 只有 3.19:1，**0.72 才到 7.10:1**（技能要求的 ≥7:1 基准）。
+ *     注意用「椭圆径向」而非横向条带——条带会在画面中间留下一道看得出来的暗带。
  */
-function makeScrim(w, h, { alpha = 0.45, rx = 0.72, ry = 0.28 } = {}) {
+function makeScrim(w, h, { alpha = 0.72, rx = 0.72, ry = 0.2, cy = 0.48 } = {}) {
 	return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
   <defs>
-    <radialGradient id="s" cx="50%" cy="50%" r="50%">
+    <radialGradient id="s" cx="50%" cy="${(cy * 100).toFixed(1)}%" r="50%">
       <stop offset="0%" stop-color="#0f172a" stop-opacity="${alpha}"/>
-      <stop offset="55%" stop-color="#0f172a" stop-opacity="${(alpha * 0.9).toFixed(3)}"/>
-      <stop offset="80%" stop-color="#0f172a" stop-opacity="${(alpha * 0.35).toFixed(3)}"/>
+      <stop offset="55%" stop-color="#0f172a" stop-opacity="${(alpha * 0.92).toFixed(3)}"/>
+      <stop offset="80%" stop-color="#0f172a" stop-opacity="${(alpha * 0.4).toFixed(3)}"/>
       <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <ellipse cx="${w / 2}" cy="${h / 2}" rx="${Math.round(w * rx)}" ry="${Math.round(h * ry)}" fill="url(#s)"/>
+  <ellipse cx="${w / 2}" cy="${Math.round(h * cy)}" rx="${Math.round(w * rx)}" ry="${Math.round(h * ry)}" fill="url(#s)"/>
 </svg>`;
 }
 
@@ -75,27 +79,30 @@ function lin(v) {
 const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
 /**
- * 测「文字带」的白字对比度（标题为 #FFFFFF）。
+ * 测「真实标题带」的白字对比度（标题为 #FFFFFF）。
  *
- * 🔴 不能用 `sharp(f).extract(...).stats()`：实测 sharp 的 stats() **忽略
- * extract**，两次调用返回完全相同的整图均值（183.07/185.79/200.56），
- * 于是「整图对比度」被误当成「文字带对比度」，报出假的 1.90:1。
- * 必须自己取原始像素算。
+ * 🔴 两个坑：
+ *  ① 不能用 `sharp(f).extract(...).stats()`：实测 sharp 的 stats() **忽略 extract**，
+ *    两次调用返回完全相同的整图均值（183.07/185.79/200.56），于是「整图对比度」
+ *    被误当成「标题带对比度」，报出假的 1.90:1。必须自己取 raw() 像素算。
+ *  ② 不能测图片正中心：横幅只显示图片中间 65%，标题带实测落在图片内 y 42%~54%，
+ *    与正中心（50%）只差几趴但会明显低估遮挡效果。这里按实测带取。
+ *
+ * @param band 标题带在图片内的纵向范围 [from, to]，0~1
  */
-async function reportContrast(outPath, width, height) {
+async function reportContrast(outPath, width, height, band = [0.42, 0.54]) {
 	const { data, info } = await sharp(outPath)
 		.raw()
 		.toBuffer({ resolveWithObject: true });
 	const ch = info.channels;
-	const halfW = width * 0.25;
-	const halfH = height * 0.1;
+	const y0 = Math.round(height * band[0]);
+	const y1 = Math.round(height * band[1]);
+	const x0 = Math.round(width * 0.2);
+	const x1 = Math.round(width * 0.8);
 	const sum = [0, 0, 0];
 	let n = 0;
-	for (let y = 0; y < height; y++) {
-		const dy = Math.abs(y - height / 2);
-		if (dy > halfH) continue;
-		for (let x = 0; x < width; x++) {
-			if (Math.abs(x - width / 2) > halfW) continue;
+	for (let y = y0; y < y1; y++) {
+		for (let x = x0; x < x1; x++) {
 			const o = (y * width + x) * ch;
 			sum[0] += data[o];
 			sum[1] += data[o + 1];
@@ -107,7 +114,7 @@ async function reportContrast(outPath, width, height) {
 	const L = lumOf(m.map(lin));
 	const ratio = 1.05 / (L + 0.05);
 	log(
-		`      文字带亮度 ${lumOf(m).toFixed(0)}  白字对比度 ${ratio.toFixed(2)}:1  ${ratio >= 3 ? "✓ 达 WCAG 大字" : "✗ 不足 3:1"}`,
+		`      标题带亮度 ${lumOf(m).toFixed(0)}  白字对比度 ${ratio.toFixed(2)}:1  ${ratio >= 7 ? "✓ 达 7:1" : ratio >= 4.5 ? "△ 达 4.5:1" : "✗ 不足"}`,
 	);
 	return ratio;
 }
@@ -116,7 +123,7 @@ async function toWebp(src, outPath, width, height, opts = {}) {
 	const { quality = 82, position = "center", scrim = null } = opts;
 	let pipe = sharp(src).resize(width, height, { fit: "cover", position });
 	if (scrim) {
-		pipe = pipe.composite([{ input: Buffer.from(scrim), blend: "over" }]);
+		pipe = pipe.composite([{ input: Buffer.from(scrim.svg), blend: "over" }]);
 	}
 	await pipe.webp({ quality, effort: 6 }).toFile(outPath);
 
@@ -128,10 +135,11 @@ async function toWebp(src, outPath, width, height, opts = {}) {
 	}
 	log(`  ✓ ${rel(outPath).padEnd(44)} ${meta.width}×${meta.height}  ${fs.statSync(outPath).size} B`);
 	if (scrim) {
-		const ratio = await reportContrast(outPath, width, height);
-		// 硬失败：白字压在过亮的底上会让首页标题看不清，这是可用性问题，不能只警告
-		if (ratio < 3) {
-			throw new Error(`${rel(outPath)} 文字带白字对比度仅 ${ratio.toFixed(2)}:1，低于 3:1`);
+		const ratio = await reportContrast(outPath, width, height, scrim.band);
+		// 硬失败：白字压在过亮的底上会让标题看不清，这是可用性问题，不能只警告。
+		// 4.5:1 = WCAG AA 正文标准（兜底）；7:1 是技能里的目标值。
+		if (ratio < 4.5) {
+			throw new Error(`${rel(outPath)} 标题带白字对比度仅 ${ratio.toFixed(2)}:1，低于 4.5:1`);
 		}
 	}
 }
@@ -176,7 +184,7 @@ async function writeIco(srcPng, outPath, sizes) {
 // 四个互不重复的玩具主题：积木套圈 / 形状盒算盘 / 玩具车小火车 / 毛绒玩偶茶具
 log("【1】桌面轮播 1920×1080（含文字带遮罩）");
 const desktopSrc = [pickPng("t-blocks"), pickPng("t-shapes"), pickPng("d5"), pickPng("d4")];
-const desktopScrim = makeScrim(1920, 1080, { alpha: 0.45, rx: 0.72, ry: 0.28 });
+const desktopScrim = { svg: makeScrim(1920, 1080, { alpha: 0.72, rx: 0.72, ry: 0.2, cy: 0.48 }), band: [0.42, 0.54] };
 for (let i = 0; i < 4; i++) {
 	await toWebp(desktopSrc[i], path.join(ROOT, `public/assets/desktop-banner/${i + 1}.webp`), 1920, 1080, {
 		quality: 82,
@@ -187,7 +195,7 @@ for (let i = 0; i < 4; i++) {
 // ---------- 2. 移动轮播 1000×1414 ----------
 log("【2】移动轮播 1000×1414（含文字带遮罩）");
 const mobileSrc = [pickPng("m1"), pickPng("m2"), pickPng("m3"), pickPng("m4")];
-const mobileScrim = makeScrim(1000, 1414, { alpha: 0.45, rx: 0.82, ry: 0.24 });
+const mobileScrim = { svg: makeScrim(1000, 1414, { alpha: 0.72, rx: 0.82, ry: 0.16, cy: 0.48 }), band: [0.42, 0.54] };
 for (let i = 0; i < 4; i++) {
 	await toWebp(mobileSrc[i], path.join(ROOT, `public/assets/mobile-banner/${i + 1}.webp`), 1000, 1414, {
 		quality: 82,

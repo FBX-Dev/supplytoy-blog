@@ -127,3 +127,4 @@ Everything else marketed as a travel toy is either too big, too loud, or will be
 - For a two-year-old, the same principles are in [toys for 2-year-olds](/post/best-toys-for-2-year-olds).
 - Small puzzles travel well, and [puzzles by age](/post/puzzles-by-age-parents-guide) has the size sequence.
 - If you are looking for small, cheap additions, [stocking stuffers for toddlers](/post/best-stocking-stuffers-for-toddlers) is the same problem in a different season.
+- Once the children are older, the whole approach changes, and [travel and waiting toys for kids 6 to 12](/post/travel-and-waiting-toys-for-kids-6-to-12) picks it up.

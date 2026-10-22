@@ -89,3 +89,4 @@ Then buy the helmet that matches the activity, check which standard is on the st
 - The physical-play argument is set out in [gross motor play and risky play](/post/gross-motor-play-and-risky-play).
 - For the age bands involved, see [toys for 9 to 12-year-olds](/post/best-toys-for-9-to-12-year-olds).
 - The fixed equipment those toys sit beside has its own checklist: [backyard swing sets and playsets](/post/backyard-swing-sets-and-playsets-safety).
+- For the hours spent getting there and waiting around once you arrive, see [travel and waiting toys for kids 6 to 12](/post/travel-and-waiting-toys-for-kids-6-to-12).

@@ -104,3 +104,4 @@ Buy fewer pieces, keep them reachable, rotate them, and then get out of the way.
 - The consequence for toy volume is in [fewer toys, better play](/post/fewer-toys-better-play-toy-rotation).
 - Material is a separate question, covered in [wooden versus plastic toys](/post/wooden-vs-plastic-toys).
 - And the clearest example of an open-ended toy is [a plain set of wooden blocks](/post/best-wooden-building-blocks-1-to-3).
+- An open-ended toy also has to be matched to what a child can actually do, which is the argument in [toys and play for children with special needs](/post/toys-and-play-for-children-with-special-needs).

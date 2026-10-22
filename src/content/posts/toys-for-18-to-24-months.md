@@ -113,3 +113,4 @@ Buy fewer things, and buy the version your child can use alone. The toy that let
 - After the second birthday the next guide is [toys for 2-year-olds](/post/best-toys-for-2-year-olds).
 - For the whole of the second year, see [toys for 1-year-olds](/post/best-toys-for-1-year-olds).
 - Play kitchens start to earn their space now, per [what to look for in a play kitchen](/post/best-play-kitchens-for-toddlers).
+- If drop-off at child care is the harder part of this stage, [separation anxiety and child care drop-off](/post/separation-anxiety-and-child-care-drop-off) covers it.

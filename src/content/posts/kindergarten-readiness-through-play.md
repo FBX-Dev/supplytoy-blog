@@ -106,3 +106,4 @@ So spend the summer that way. Let the child lead pretend scenarios, give instruc
 - The maths half is [early maths toys for 4 and 5-year-olds](/post/early-maths-toys-for-4-and-5-year-olds).
 - Fine motor control, which readiness checklists keep circling back to, is covered in [fine motor skills and pencil grip](/post/fine-motor-skills-and-pencil-grip).
 - Why unstructured time beats structured lessons is argued in [fewer toys, better play](/post/fewer-toys-better-play-toy-rotation).
+- The earlier settling-in version of the same skill is in [separation anxiety and child care drop-off](/post/separation-anxiety-and-child-care-drop-off).

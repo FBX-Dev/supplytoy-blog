@@ -129,3 +129,4 @@ Buy real, functional objects. Prefer self-correcting designs. Isolate one diffic
 - The case against a crowded toy shelf is made in [fewer toys, better play](/post/fewer-toys-better-play-toy-rotation).
 - The underlying idea is covered separately in [what open-ended actually means](/post/open-ended-toys-what-it-means).
 - A comfort object is the one exception to the minimalist shelf, and [choosing a first stuffed animal](/post/how-to-choose-first-stuffed-animal-lovey) explains why.
+- The same developmental-not-chronological logic is what a child with a difference needs most, per [toys and play for children with special needs](/post/toys-and-play-for-children-with-special-needs).

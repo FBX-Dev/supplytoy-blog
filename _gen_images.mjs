@@ -10,11 +10,18 @@
  *   public/sakura.webp                          328×304   （樱花贴图，特效 enable:false）
  *   public/favicon/favicon.ico                  16/32/48/64 多尺寸
  *
- * 🔴 轮播图必须加「文字带遮罩」：
- *   Banner.astro L603 的首页标题是 text-white，而马卡龙图中心亮度 213~232，
- *   白字对比度只有 1.48:1（WCAG 大字要求 ≥3:1）→ 标题会看不清。
- *   npuai 原图中心亮度仅 10~20（深色动漫图）所以没这问题，是本次换图引入的回退。
- *   解法：只在标题所在的横向带叠一层柔和暗化，周边保持明亮马卡龙。
+ * 🔴 轮播图**不要**烘焙遮罩（2026-10-22 改）：
+ *   早先版本在图片里烤了一层深色暗带，用来保证白字标题可读。实测发现这是错的：
+ *   用 Playwright 量了 4 种组合，**只有「桌面端 + 非首页」才真的有文字**——
+ *     桌面/首页：.banner-text-overlay display:none（h=0）
+ *     桌面/文章：#banner-page-overlay top=306 h=48 → 有文字
+ *     移动/首页、移动/文章：#banner-page-overlay display:none（hidden lg:flex）
+ *   于是烤进图里的暗化，在首页和全部移动端都是**纯多余的压暗**，
+ *   表现为「整体灰乎乎一片」，可见带里 45~47% 的行亮度被压到 79~95。
+ *   → 改为**图片保持干净鲜亮的马卡龙原图**，遮罩交给 CSS 按需叠加：
+ *     `banner.css` 的 `.banner-page-overlay:has(#page-overlay-title:not(:empty))`
+ *     只在「桌面 + 非首页 + 标题真有字」时铺一层 radial-gradient。零 JS 改动。
+ *   ⚠️ 因此本脚本现在**校验亮度下限**（标题带不得低于 170），防止遮罩被重新烤回来。
  *
  * 🔴 sharp 写不了 .ico → 手工拼 ICO 容器（ICONDIR + ICONDIRENTRY + PNG 数据）。
  * 🔴 sharp 是 CJS，ESM 下 NODE_PATH 无效 → 用 createRequire 载入。
@@ -45,32 +52,6 @@ function pickPng(dir) {
 	return path.join(abs, files[0]);
 }
 
-/**
- * 生成「文字带遮罩」SVG：一条横向柔和暗带，中心对准**真实标题位置**。
- * 用深蓝灰 #0f172a（贴合站点主色 hue 205）而不是纯黑，避免发死。
- *
- * 🔴 参数全部来自实测，别随手改：
- *   - 横幅真实渲染高度 **702px（65vh）**，不是配置里写的 35vh；
- *     图片 1920×1080 被 object-cover 裁中间 → 可见带 = 中间 65%（图片内 y 17.5%~82.5%）。
- *   - 文章页标题实测在页面 y **306~354px** → 占横幅 43.6%~50.4%
- *     → 换算到图片内 y = 17.5% + 0.65×(43.6%..50.4%) = **45.8%~50.3%**，留余量取 42%~54%。
- *   - 强度：alpha 0.45 只有 3.19:1，**0.72 才到 7.10:1**（技能要求的 ≥7:1 基准）。
- *     注意用「椭圆径向」而非横向条带——条带会在画面中间留下一道看得出来的暗带。
- */
-function makeScrim(w, h, { alpha = 0.72, rx = 0.72, ry = 0.2, cy = 0.48 } = {}) {
-	return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
-  <defs>
-    <radialGradient id="s" cx="50%" cy="${(cy * 100).toFixed(1)}%" r="50%">
-      <stop offset="0%" stop-color="#0f172a" stop-opacity="${alpha}"/>
-      <stop offset="55%" stop-color="#0f172a" stop-opacity="${(alpha * 0.92).toFixed(3)}"/>
-      <stop offset="80%" stop-color="#0f172a" stop-opacity="${(alpha * 0.4).toFixed(3)}"/>
-      <stop offset="100%" stop-color="#0f172a" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <ellipse cx="${w / 2}" cy="${Math.round(h * cy)}" rx="${Math.round(w * rx)}" ry="${Math.round(h * ry)}" fill="url(#s)"/>
-</svg>`;
-}
-
 /** sRGB → 线性亮度，用于算 WCAG 对比度。 */
 function lin(v) {
 	v /= 255;
@@ -79,18 +60,18 @@ function lin(v) {
 const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
 /**
- * 测「真实标题带」的白字对比度（标题为 #FFFFFF）。
+ * 测「标题带」的亮度，确保轮播图**没有被压暗**。
  *
  * 🔴 两个坑：
  *  ① 不能用 `sharp(f).extract(...).stats()`：实测 sharp 的 stats() **忽略 extract**，
- *    两次调用返回完全相同的整图均值（183.07/185.79/200.56），于是「整图对比度」
- *    被误当成「标题带对比度」，报出假的 1.90:1。必须自己取 raw() 像素算。
- *  ② 不能测图片正中心：横幅只显示图片中间 65%，标题带实测落在图片内 y 42%~54%，
- *    与正中心（50%）只差几趴但会明显低估遮挡效果。这里按实测带取。
+ *    两次调用返回完全相同的整图均值（183.07/185.79/200.56），于是「整图亮度」
+ *    被误当成「标题带亮度」。必须自己取 raw() 像素算。
+ *  ② 不能测图片正中心：横幅只显示图片中间 65%，标题带实测落在图片内 y 42%~54%
+ *    （object-cover 裁中间 → 可见带 y 17.5%~82.5%，标题在页 y 306~354 换算而来）。
  *
  * @param band 标题带在图片内的纵向范围 [from, to]，0~1
  */
-async function reportContrast(outPath, width, height, band = [0.42, 0.54]) {
+async function reportBandLum(outPath, width, height, band = [0.42, 0.54]) {
 	const { data, info } = await sharp(outPath)
 		.raw()
 		.toBuffer({ resolveWithObject: true });
@@ -111,20 +92,16 @@ async function reportContrast(outPath, width, height, band = [0.42, 0.54]) {
 		}
 	}
 	const m = sum.map((v) => v / n);
-	const L = lumOf(m.map(lin));
-	const ratio = 1.05 / (L + 0.05);
+	const lum = lumOf(m);
 	log(
-		`      标题带亮度 ${lumOf(m).toFixed(0)}  白字对比度 ${ratio.toFixed(2)}:1  ${ratio >= 7 ? "✓ 达 7:1" : ratio >= 4.5 ? "△ 达 4.5:1" : "✗ 不足"}`,
+		`      标题带亮度 ${lum.toFixed(0)}  ${lum >= 170 ? "✓ 鲜亮（遮罩已交给 CSS）" : "🔴 偏暗，可能又被烘焙了遮罩"}`,
 	);
-	return ratio;
+	return lum;
 }
 
 async function toWebp(src, outPath, width, height, opts = {}) {
-	const { quality = 82, position = "center", scrim = null } = opts;
+	const { quality = 82, position = "center", checkBand = null } = opts;
 	let pipe = sharp(src).resize(width, height, { fit: "cover", position });
-	if (scrim) {
-		pipe = pipe.composite([{ input: Buffer.from(scrim.svg), blend: "over" }]);
-	}
 	await pipe.webp({ quality, effort: 6 }).toFile(outPath);
 
 	const meta = await sharp(outPath).metadata();
@@ -134,12 +111,12 @@ async function toWebp(src, outPath, width, height, opts = {}) {
 		);
 	}
 	log(`  ✓ ${rel(outPath).padEnd(44)} ${meta.width}×${meta.height}  ${fs.statSync(outPath).size} B`);
-	if (scrim) {
-		const ratio = await reportContrast(outPath, width, height, scrim.band);
-		// 硬失败：白字压在过亮的底上会让标题看不清，这是可用性问题，不能只警告。
-		// 4.5:1 = WCAG AA 正文标准（兜底）；7:1 是技能里的目标值。
-		if (ratio < 4.5) {
-			throw new Error(`${rel(outPath)} 标题带白字对比度仅 ${ratio.toFixed(2)}:1，低于 4.5:1`);
+	if (checkBand) {
+		const lum = await reportBandLum(outPath, width, height, checkBand);
+		// 硬失败：轮播图必须是干净原图。压暗了说明遮罩被重新烘焙，
+		// 那会让首页/移动端（根本没文字）也跟着发灰。
+		if (lum < 170) {
+			throw new Error(`${rel(outPath)} 标题带亮度仅 ${lum.toFixed(0)}，低于 170，疑似重新烘焙了遮罩`);
 		}
 	}
 }
@@ -182,24 +159,23 @@ async function writeIco(srcPng, outPath, sizes) {
 
 // ---------- 1. 桌面轮播 1920×1080 ----------
 // 四个互不重复的玩具主题：积木套圈 / 形状盒算盘 / 玩具车小火车 / 毛绒玩偶茶具
-log("【1】桌面轮播 1920×1080（含文字带遮罩）");
+// 🔴 不烘焙遮罩：保持干净鲜亮的马卡龙原图，压暗交给 CSS 按需叠加（见文件头说明）。
+log("【1】桌面轮播 1920×1080（干净原图，不烘焙遮罩）");
 const desktopSrc = [pickPng("t-blocks"), pickPng("t-shapes"), pickPng("d5"), pickPng("d4")];
-const desktopScrim = { svg: makeScrim(1920, 1080, { alpha: 0.72, rx: 0.72, ry: 0.2, cy: 0.48 }), band: [0.42, 0.54] };
 for (let i = 0; i < 4; i++) {
 	await toWebp(desktopSrc[i], path.join(ROOT, `public/assets/desktop-banner/${i + 1}.webp`), 1920, 1080, {
 		quality: 82,
-		scrim: desktopScrim,
+		checkBand: [0.42, 0.54],
 	});
 }
 
 // ---------- 2. 移动轮播 1000×1414 ----------
-log("【2】移动轮播 1000×1414（含文字带遮罩）");
+log("【2】移动轮播 1000×1414（干净原图，不烘焙遮罩）");
 const mobileSrc = [pickPng("m1"), pickPng("m2"), pickPng("m3"), pickPng("m4")];
-const mobileScrim = { svg: makeScrim(1000, 1414, { alpha: 0.72, rx: 0.82, ry: 0.16, cy: 0.48 }), band: [0.42, 0.54] };
 for (let i = 0; i < 4; i++) {
 	await toWebp(mobileSrc[i], path.join(ROOT, `public/assets/mobile-banner/${i + 1}.webp`), 1000, 1414, {
 		quality: 82,
-		scrim: mobileScrim,
+		checkBand: [0.42, 0.54],
 	});
 }
 

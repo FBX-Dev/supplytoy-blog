@@ -71,5 +71,39 @@ for (const [f] of EXPECT) {
 }
 if (hashes.size === 8) { pass++; console.log("  ✓ 8 张全部唯一"); }
 
+console.log("\n=== E. 轮播图必须是鲜亮原图（不得烘焙遮罩）===");
+// 2026-10-22：遮罩改由 CSS 按需叠加（banner.css 的 :has() 门控），
+// 图片本身必须是干净的马卡龙原图。若标题带亮度 <170，说明遮罩被重新烤回来了
+// → 首页/移动端（根本没文字）会跟着发灰，就是用户反馈的「整体灰乎乎」。
+const lin2 = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+for (const [f, w, h] of EXPECT) {
+  if (!/banner/.test(f)) continue;
+  const { data, info } = await sharp(f).raw().toBuffer({ resolveWithObject: true });
+  const ch = info.channels;
+  const y0 = Math.round(h * 0.42), y1 = Math.round(h * 0.54);
+  const x0 = Math.round(w * 0.2), x1 = Math.round(w * 0.8);
+  const sum = [0, 0, 0]; let n = 0;
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const o = (y * w + x) * ch;
+    sum[0] += data[o]; sum[1] += data[o+1]; sum[2] += data[o+2]; n++;
+  }
+  const m = sum.map((v) => v / n);
+  const lum = lumOf(m);
+  const ok = lum >= 170;
+  ok ? pass++ : fail++;
+  console.log(`  ${ok?"✓":"✗"} ${f.padEnd(42)} 标题带亮度 ${lum.toFixed(0)} ${ok ? "（鲜亮）" : "🔴 偏暗，疑似重新烘焙了遮罩"}`);
+}
+
+console.log("\n=== F. CSS 按需遮罩是否存在且参数正确 ===");
+// 遮罩必须靠 :has(#page-overlay-title:not(:empty)) 门控，
+// 否则首页/移动端会白压一层 → 「整体灰乎乎」。
+const css = fs.readFileSync("src/styles/banner.css", "utf8");
+const hasGate = /\.banner-page-overlay:has\(#page-overlay-title:not\(:empty\)\)/.test(css);
+const hasGrad = /radial-gradient\(\s*ellipse 78% 14% at 50% 50%/.test(css);
+const gateOk = hasGate && hasGrad;
+gateOk ? pass++ : fail++;
+console.log(`  ${gateOk?"✓":"✗"} :has() 门控 ${hasGate ? "存在" : "🔴 缺失"}；椭圆 78%×14% @50%50% ${hasGrad ? "正确" : "🔴 不符"}`);
+
 console.log(`\n===== 通过 ${pass} / 失败 ${fail} =====`);
 process.exit(fail ? 1 : 0);

@@ -76,3 +76,6 @@ _tmp_*.log
 # ⚠️ 体积可到 1.5G，绝不能被提交。里面 www-redirect-rule.json 是
 # zone Redirect Rule 的唯一本地备份，**不要删文件**，只是不提交。
 _trash/
+
+# WorkBuddy 项目数据与工作日志（本地留存，不进公开仓库）
+.workbuddy/

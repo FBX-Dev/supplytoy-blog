@@ -95,15 +95,43 @@ for (const [f, w, h] of EXPECT) {
   console.log(`  ${ok?"✓":"✗"} ${f.padEnd(42)} 标题带亮度 ${lum.toFixed(0)} ${ok ? "（鲜亮）" : "🔴 偏暗，疑似重新烘焙了遮罩"}`);
 }
 
-console.log("\n=== F. CSS 按需遮罩是否存在且参数正确 ===");
-// 遮罩必须靠 :has(#page-overlay-title:not(:empty)) 门控，
-// 否则首页/移动端会白压一层 → 「整体灰乎乎」。
+console.log("\n=== F. 标题遮罩必须彻底不存在（2026-10-22 用户决定取消）===");
+// 用户明确否决了遮罩：原图亮度已够、首页/移动端本无标题、正文另有正式 h1。
+// 这里同时挡三条回退路径：CSS 规则、JS 内联样式、图片里重新烘焙。
 const css = fs.readFileSync("src/styles/banner.css", "utf8");
-const hasGate = /\.banner-page-overlay:has\(#page-overlay-title:not\(:empty\)\)/.test(css);
-const hasGrad = /radial-gradient\(\s*ellipse 78% 14% at 50% 50%/.test(css);
-const gateOk = hasGate && hasGrad;
-gateOk ? pass++ : fail++;
-console.log(`  ${gateOk?"✓":"✗"} :has() 门控 ${hasGate ? "存在" : "🔴 缺失"}；椭圆 78%×14% @50%50% ${hasGrad ? "正确" : "🔴 不符"}`);
+const cssHasScrimRule =
+	/\.banner-page-overlay\s*:has\(\s*#page-overlay-title/.test(css) ||
+	/radial-gradient\(\s*ellipse 78% 14% at 50% 50%/.test(css);
+cssHasScrimRule ? fail++ : pass++;
+console.log(`  ${!cssHasScrimRule?"✓":"✗"} banner.css 无遮罩规则 ${cssHasScrimRule ? "🔴 又被加回来了" : "（已移除）"}`);
+
+const hooks = fs.readFileSync("src/scripts/core/swup-hooks.ts", "utf8");
+// 挡「给 overlay 注入背景」的写法
+const jsInjectsBg =
+	/banner-page-overlay[\s\S]{0,400}?style\.background/.test(hooks) ||
+	/overlay\.style\.backgroundImage/.test(hooks);
+jsInjectsBg ? fail++ : pass++;
+console.log(`  ${!jsInjectsBg?"✓":"✗"} swup-hooks.ts 未注入遮罩背景 ${jsInjectsBg ? "🔴 存在注入" : "（干净）"}`);
+
+console.log("\n=== G. 字数单位必须是英文 words（不得出现中文「字」）===");
+// 原先 swup-hooks.ts 硬编码 `${words} 字`，会把中文漏到英文站。
+const hardcodedZh = /\$\{\s*words\s*\}\s*字/.test(hooks);
+hardcodedZh ? fail++ : pass++;
+console.log(`  ${!hardcodedZh?"✓":"✗"} 无硬编码「字」${hardcodedZh ? " 🔴 仍存在" : ""}`);
+
+const usesLabel = /dataEl\.dataset\.wordsLabel/.test(hooks);
+usesLabel ? pass++ : fail++;
+console.log(`  ${usesLabel?"✓":"✗"} 从 data-words-label 读取本地化单位 ${usesLabel ? "" : "🔴 缺失"}`);
+
+const layout = fs.readFileSync("src/layouts/MainGridLayout.astro", "utf8");
+const emitsLabel = /data-words-label=\{i18n\(I18nKey\.wordsCount\)\}/.test(layout);
+emitsLabel ? pass++ : fail++;
+console.log(`  ${emitsLabel?"✓":"✗"} MainGridLayout 注入 i18n(wordsCount) ${emitsLabel ? "" : "🔴 缺失"}`);
+
+const enLang = fs.readFileSync("src/i18n/languages/en.ts", "utf8");
+const enWords = /\[Key\.wordsCount\]:\s*"words"/.test(enLang);
+enWords ? pass++ : fail++;
+console.log(`  ${enWords?"✓":"✗"} en.ts wordsCount === "words" ${enWords ? "" : "🔴 不符"}`);
 
 console.log(`\n===== 通过 ${pass} / 失败 ${fail} =====`);
 process.exit(fail ? 1 : 0);

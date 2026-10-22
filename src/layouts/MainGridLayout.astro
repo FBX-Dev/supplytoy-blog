@@ -16,6 +16,8 @@ import {
 	BANNER_HEIGHT,
 	BANNER_HEIGHT_FULLSCREEN,
 } from "../constants/constants";
+import I18nKey from "../i18n/i18nKey";
+import { i18n } from "../i18n/translation";
 import { formatDateToYYYYMMDD } from "../utils/date-utils";
 import {
 	calculateGridLayout,
@@ -254,6 +256,7 @@ const defaultPostListLayout = siteConfig.postListLayout?.defaultMode || "list";
 							data-date={publishedDate ? formatDateToYYYYMMDD(publishedDate, publishedDateOnly) : ""}
 							data-category={category || ""}
 							data-words={wordCount ? String(wordCount) : ""}
+							data-words-label={i18n(I18nKey.wordsCount)}
 							data-is-post={postSlug ? "true" : "false"}
 							data-is-home={isHomePage ? "true" : "false"}
 							data-wallpaper-mode={siteConfig.wallpaperMode.defaultMode}

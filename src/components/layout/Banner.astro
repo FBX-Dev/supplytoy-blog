@@ -630,7 +630,11 @@ const bannerFormats = getImageFormats();
 	<!-- 非首页页面标题覆盖层（持久化容器，JS 动态填充文本） -->
 	<div id="banner-page-overlay" class="banner-page-overlay hidden lg:flex absolute inset-0 z-20 pointer-events-none">
 		<div class="flex flex-col items-center justify-center w-full text-center px-4">
-			<h2 id="page-overlay-title" class="page-overlay-title text-3xl lg:text-5xl text-white font-bold drop-shadow-lg px-4"></h2>
+			<!-- 🔴 不要加 drop-shadow-lg：Tailwind 的 drop-shadow 走 filter，
+			     会被 overlayTitleIn 动画的 `filter: blur(0)`（fill both）覆盖掉，
+			     实测 textShadow 变成 none、完全失效。描边统一由 banner.css
+			     的 text-shadow 规则提供。 -->
+			<h2 id="page-overlay-title" class="page-overlay-title text-3xl lg:text-5xl text-white font-bold px-4"></h2>
 			<div id="page-overlay-meta" class="page-overlay-meta hidden flex-wrap items-center justify-center gap-x-5 gap-y-2 text-white/80 text-sm md:text-base mt-4">
 				<span class="inline-flex items-center gap-1.5">
 					<Icon name="material-symbols:calendar-month-outline-rounded" class="text-[1.05em]" />

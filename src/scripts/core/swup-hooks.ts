@@ -548,11 +548,15 @@ export class SwupHooksManager {
 		const date = dataEl.dataset.date || "";
 		const category = dataEl.dataset.category || "";
 		const words = dataEl.dataset.words || "";
+		// 字数单位走 Astro 侧注入的本地化标签（`i18n(I18nKey.wordsCount)`），
+		// 而不是在这里硬编码 —— 原先硬编码 `字` 会把中文漏到英文站上。
+		// 兜底 `"words"`：万一 data 属性缺失（旧缓存 HTML），也不会退回中文。
+		const wordsLabel = dataEl.dataset.wordsLabel || "words";
 
 		if (isPost && (date || category || words)) {
 			dateEl.textContent = date;
 			categoryEl.textContent = category;
-			wordsEl.textContent = words ? `${words} 字` : "";
+			wordsEl.textContent = words ? `${words} ${wordsLabel}` : "";
 			metaEl.classList.remove("hidden");
 			metaEl.classList.remove("anim-in");
 

@@ -1,6 +1,7 @@
 /**
  * 线上最终验收截图 + 对比度实测。
- * 覆盖：桌面文章页（有遮罩）、桌面首页（无遮罩）、移动首页、移动文章页。
+ * 覆盖：桌面文章页、桌面首页、移动首页、移动文章页。
+ * ⚠️ 2026-10-22 起遮罩已全部取消 —— 四张图都应是**无遮罩原图**。
  * 直连线上，不走代理。
  */
 import fs from "node:fs";
@@ -24,22 +25,47 @@ const lin = (v) => {
 };
 const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
-async function bandStats(buf) {
+/**
+ * 🔴 这里以前用「整条横带均值」估对比度，口径是错的（2026-10-22 修正）：
+ *   ① 横带里大部分像素是文字两侧的亮底，均值被抬高，量不出字压在哪里；
+ *   ② 剔除白字像素的阈值 190 会把马卡龙底图本身（p50≈203）也剔掉，
+ *      n=0 时返回哨兵值 → 打印「最差 1.00:1」这种无意义结论。
+ * 正确口径：**白字笔画边界 vs 环上紧邻最暗像素**，且必须先等入场动画结束
+ * （否则量到 `filter: blur(6px)` 的中间态）。见 `_verify_readability.mjs`。
+ */
+async function edgeStats(buf, coreMin = 245, nonCoreMax = 200, boundaryR = 1) {
 	const { data, info } = await sharp(buf).raw().toBuffer({ resolveWithObject: true });
-	const ch = info.channels;
-	const sum = [0, 0, 0];
-	let n = 0;
-	for (let i = 0; i < data.length; i += ch) {
-		const px = [data[i], data[i + 1], data[i + 2]];
-		if (lumOf(px) > 190) continue;
-		sum[0] += px[0];
-		sum[1] += px[1];
-		sum[2] += px[2];
-		n++;
+	const W = info.width, H = info.height, ch = info.channels;
+	const lum = new Float64Array(W * H);
+	for (let p = 0, i = 0; i < data.length; i += ch, p++) {
+		lum[p] = lumOf([data[i], data[i + 1], data[i + 2]]);
 	}
-	if (!n) return { lum: 255, ratio: 1 };
-	const m = sum.map((v) => v / n);
-	return { lum: lumOf(m), ratio: 1.05 / (lumOf(m.map(lin)) + 0.05) };
+	const at = (x, y) => lum[y * W + x];
+	const ratios = [];
+	const M = boundaryR + 10;
+	for (let y = M; y < H - M; y++) {
+		for (let x = M; x < W - M; x++) {
+			if (at(x, y) < coreMin) continue;
+			let isB = false;
+			for (let dy = -boundaryR; dy <= boundaryR && !isB; dy++) {
+				for (let dx = -boundaryR; dx <= boundaryR; dx++) {
+					if (at(x + dx, y + dy) < nonCoreMax) { isB = true; break; }
+				}
+			}
+			if (!isB) continue;
+			let dk = 255;
+			for (let d = 3; d <= 10; d++) {
+				for (const c of [at(x - d, y), at(x + d, y), at(x, y - d), at(x, y + d)]) {
+					if (c < dk) dk = c;
+				}
+			}
+			ratios.push(1.05 / (lumOf([dk, dk, dk].map(lin)) + 0.05));
+		}
+	}
+	if (!ratios.length) return null;
+	ratios.sort((a, b) => a - b);
+	const q = (p) => ratios[Math.min(ratios.length - 1, Math.floor(ratios.length * p))];
+	return { n: ratios.length, p5: q(0.05), median: q(0.5) };
 }
 
 const browser = await pw.chromium.launch();
@@ -61,24 +87,33 @@ const browser = await pw.chromium.launch();
 		const r = inner?.getBoundingClientRect();
 		return { top: Math.round(r.top), height: Math.round(r.height) };
 	});
-	const clip = {
-		x: 0,
-		y: Math.max(0, box.top - 30),
-		width: 1920,
-		height: Math.min(1080 - Math.max(0, box.top - 30), box.height + 60),
-	};
-	let worst = { ratio: 99 };
+	// 只量标题自身（48px 粗体纯白），排除 meta 行的干扰
+	const clip = await page.evaluate(() => {
+		const t = document.getElementById("page-overlay-title");
+		const r = t.getBoundingClientRect();
+		return {
+			x: Math.max(0, Math.floor(r.left) - 12),
+			y: Math.max(0, Math.floor(r.top) - 12),
+			width: Math.ceil(r.width) + 24,
+			height: Math.ceil(r.height) + 24,
+		};
+	});
+	const shadow = await page.evaluate(
+		() => getComputedStyle(document.getElementById("page-overlay-title")).textShadow,
+	);
+	console.log(`  标题描边：${shadow}`);
+	let worst = { p5: 99, median: 0 };
 	const t0 = Date.now();
 	let n = 0;
-	while (Date.now() - t0 < 14000) {
+	while (Date.now() - t0 < 30000) {
 		const buf = await page.screenshot({ clip, type: "png" });
-		const s = await bandStats(buf);
+		const s = await edgeStats(buf);
 		n++;
-		if (s.ratio < worst.ratio) worst = s;
+		if (s && s.p5 < worst.p5) worst = s;
 		await page.waitForTimeout(250);
 	}
 	console.log(
-		`线上 桌面文章页：采样 ${n} 次 → 最差对比度 ${worst.ratio.toFixed(2)}:1（底亮 ${worst.lum?.toFixed(0)}）  ${worst.ratio >= 4.5 ? "✓" : "✗"}`,
+		`线上 桌面文章页：采样 ${n} 次 → 标题最差帧 p5=${worst.p5.toFixed(2)}:1（中位 ${worst.median?.toFixed(2)}:1）  ${worst.p5 >= 3.0 ? "✓ 达大字号 AA" : "✗"}`,
 	);
 	await ctx.close();
 }

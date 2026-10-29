@@ -4,7 +4,8 @@
 //    改为并发池（默认 10）后实测 **9 s**，检查项与输出格式完全不变。
 //    并发对 CF 静态资源很友好（162 个普通资源请求，不是压测）。
 const BASE = "https://supplytoy.com";
-const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36";
+const UA =
+	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36";
 const CONC = 10;
 
 // 并发池：保持输出顺序与串行一致
@@ -17,7 +18,9 @@ async function mapPool(items, fn, conc = CONC) {
 			out[idx] = await fn(items[idx], idx);
 		}
 	}
-	await Promise.all(Array.from({ length: Math.min(conc, items.length) }, worker));
+	await Promise.all(
+		Array.from({ length: Math.min(conc, items.length) }, worker),
+	);
 	return out;
 }
 
@@ -31,7 +34,8 @@ async function head(u) {
 			});
 			return { code: r.status, loc: r.headers.get("location") || "" };
 		} catch (e) {
-			if (i === 2) return { code: -1, loc: `ERR ${e.cause?.code || e.message}` };
+			if (i === 2)
+				return { code: -1, loc: `ERR ${e.cause?.code || e.message}` };
 			await new Promise((r) => setTimeout(r, 800));
 		}
 	}
@@ -55,7 +59,7 @@ async function body(u) {
 const idx = await body("/sitemap.xml");
 const subs = [...idx.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]);
 const subBodies = await mapPool(subs, (s) => fetch(s).then((r) => r.text()));
-let urls = [];
+const urls = [];
 for (const x of subBodies) {
 	urls.push(...[...x.matchAll(/<loc>([^<]*)<\/loc>/g)].map((m) => m[1]));
 }
@@ -74,7 +78,7 @@ results.forEach((r, i) => {
 console.log(
 	`sitemap URL 可访问: ${okc}/${paths.length}  (并发 ${CONC}，${((Date.now() - t0) / 1000).toFixed(1)}s)`,
 );
-if (bad.length) bad.slice(0, 15).forEach((b) => console.log("  ✗", b));
+for (const b of bad.slice(0, 15)) console.log("  ✗", b);
 
 // 3. 关键页面内容校验
 console.log("\n=== 关键页面内容 ===");
@@ -83,8 +87,14 @@ const checks = [
 	["首页 title=SupplyToy", /<title>SupplyToy<\/title>/.test(home)],
 	["AdSense 脚本在源码", home.includes("ca-pub-3948558780581083")],
 	["GA4 ID 在源码", home.includes("G-NLZVKSJ9HB")],
-	["首页 canonical", home.includes('rel="canonical" href="https://supplytoy.com/"')],
-	["无中文残留（去 script）", !/[\u4e00-\u9fff]/.test(home.replace(/<script[\s\S]*?<\/script>/gi, ""))],
+	[
+		"首页 canonical",
+		home.includes('rel="canonical" href="https://supplytoy.com/"'),
+	],
+	[
+		"无中文残留（去 script）",
+		!/[\u4e00-\u9fff]/.test(home.replace(/<script[\s\S]*?<\/script>/gi, "")),
+	],
 	["HTML 注释已剥离", !home.includes("<!--")],
 ];
 for (const [n, v] of checks) console.log(`  ${v ? "PASS" : "FAIL"}  ${n}`);
@@ -93,13 +103,23 @@ for (const [n, v] of checks) console.log(`  ${v ? "PASS" : "FAIL"}  ${n}`);
 const post = await body("/post/advent-calendars-for-kids");
 // ⚠️ rel 是**无序集合**，不能按固定 token 顺序断言（主题输出的是
 // `nofollow noopener noreferrer sponsored`，与老站一致）。
-const amazonTags = [...post.matchAll(/<a\s[^>]*amazon[^>]*>/gi)].map((m) => m[0]);
+const amazonTags = [...post.matchAll(/<a\s[^>]*amazon[^>]*>/gi)].map(
+	(m) => m[0],
+);
 const allSponsored =
 	amazonTags.length > 0 &&
 	amazonTags.every((t) => /rel="[^"]*\bsponsored\b/i.test(t));
 const pchecks = [
-	["文章页 title 无站名后缀", !/<title>[^<]*SupplyToy[^<]*<\/title>/.test(post)],
-	["文章页 canonical 无扩展名", /rel="canonical" href="https:\/\/supplytoy\.com\/post\/advent-calendars-for-kids"/.test(post)],
+	[
+		"文章页 title 无站名后缀",
+		!/<title>[^<]*SupplyToy[^<]*<\/title>/.test(post),
+	],
+	[
+		"文章页 canonical 无扩展名",
+		/rel="canonical" href="https:\/\/supplytoy\.com\/post\/advent-calendars-for-kids"/.test(
+			post,
+		),
+	],
 	[`亚马逊链接全部带 sponsored (${amazonTags.length} 条)`, allSponsored],
 ];
 for (const [n, v] of pchecks) console.log(`  ${v ? "PASS" : "FAIL"}  ${n}`);
@@ -129,7 +149,9 @@ const infra = [
 const infraRes = await mapPool(infra, ([u]) => head(u));
 infraRes.forEach((r, i) => {
 	const [u, want] = infra[i];
-	console.log(`  ${r.code === want ? "PASS" : "FAIL"}  ${u} → ${r.code} (期望 ${want})`);
+	console.log(
+		`  ${r.code === want ? "PASS" : "FAIL"}  ${u} → ${r.code} (期望 ${want})`,
+	);
 });
 
 // 7. 跳转（并发）

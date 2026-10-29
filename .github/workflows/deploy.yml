@@ -46,7 +46,45 @@ jobs:
       # 而 pnpm 11 默认拦截依赖的构建脚本，报 ERR_PNPM_IGNORED_BUILDS 导致失败。
       # npx 走 npm，默认允许构建脚本，且 wrangler 4 对 Workers 静态资源的支持最完整。
       - name: Deploy to Cloudflare Workers
-        run: npx --yes wrangler@4 deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -uo pipefail
+
+          # Cloudflare 上游偶发 5xx 会打到 assets-upload-session（code 10013），
+          # 与本次代码改动无关，重试即可恢复（实测：认证接口返回 200、仅该接口 500）。
+          # 仅对上游故障重试；认证失败 / 配置校验错误不重试，避免把真问题掩盖成「网络抖动」。
+          RETRY_PATTERN='code: 10013|Internal Server Error|Bad Gateway|Service Unavailable|Gateway Time-?out|ECONNRESET|ETIMEDOUT|socket hang up'
+          DELAYS=(15 45)
+          MAX_ATTEMPTS=3
+          ATTEMPT=1
+
+          while :; do
+            echo "::group::wrangler deploy (attempt ${ATTEMPT}/${MAX_ATTEMPTS})"
+            RC=0
+            npx --yes wrangler@4 deploy > /tmp/wrangler.log 2>&1 || RC=$?
+            cat /tmp/wrangler.log
+            echo "::endgroup::"
+
+            if [ "$RC" -eq 0 ]; then
+              echo "Deploy succeeded on attempt ${ATTEMPT}."
+              exit 0
+            fi
+
+            if [ "$ATTEMPT" -ge "$MAX_ATTEMPTS" ]; then
+              echo "::error::Deploy failed after ${ATTEMPT} attempts."
+              exit "$RC"
+            fi
+
+            if grep -qE "$RETRY_PATTERN" /tmp/wrangler.log; then
+              WAIT=${DELAYS[$((ATTEMPT - 1))]}
+              echo "::warning::Transient Cloudflare upstream error on attempt ${ATTEMPT}; retrying in ${WAIT}s."
+              sleep "$WAIT"
+              ATTEMPT=$((ATTEMPT + 1))
+              continue
+            fi
+
+            echo "::error::Non-transient deploy failure; not retrying."
+            exit "$RC"
+          done

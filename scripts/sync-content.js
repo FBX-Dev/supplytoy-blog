@@ -1,7 +1,7 @@
-import { execSync } from "child_process";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { execSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { loadEnv } from "./load-env.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -35,9 +35,7 @@ if (!fs.existsSync(CONTENT_DIR)) {
 
 	if (!CONTENT_REPO_URL) {
 		console.warn("警告：未设置 CONTENT_REPO_URL，将使用本地内容");
-		console.log(
-			"提示：请设置 CONTENT_REPO_URL 环境变量，或手动创建内容目录",
-		);
+		console.log("提示：请设置 CONTENT_REPO_URL 环境变量，或手动创建内容目录");
 		process.exit(0);
 	}
 
@@ -80,10 +78,10 @@ if (!fs.existsSync(CONTENT_DIR)) {
 			}
 
 			// 4. 强制同步
-		execSync(`git checkout ${branch}`, { cwd: CONTENT_DIR });
-		execSync(`git reset --hard origin/${branch}`, { cwd: CONTENT_DIR });
+			execSync(`git checkout ${branch}`, { cwd: CONTENT_DIR });
+			execSync(`git reset --hard origin/${branch}`, { cwd: CONTENT_DIR });
 
-		console.log(`内容同步成功（分支：${branch}）`);
+			console.log(`内容同步成功（分支：${branch}）`);
 		} catch (error) {
 			console.warn("内容更新失败：", error.message);
 		}
@@ -112,9 +110,7 @@ for (const mapping of contentMappings) {
 	// 如果目标已存在且不是符号链接,备份它
 	if (fs.existsSync(destPath) && !fs.lstatSync(destPath).isSymbolicLink()) {
 		const backupPath = `${destPath}.backup`;
-		console.log(
-			`正在备份已有内容：${mapping.dest} -> ${mapping.dest}.backup`,
-		);
+		console.log(`正在备份已有内容：${mapping.dest} -> ${mapping.dest}.backup`);
 		if (fs.existsSync(backupPath)) {
 			fs.rmSync(backupPath, { recursive: true, force: true });
 		}
@@ -131,8 +127,10 @@ for (const mapping of contentMappings) {
 		const relPath = path.relative(path.dirname(destPath), srcPath);
 		fs.symlinkSync(relPath, destPath, "junction");
 		console.log(`已创建符号链接：${mapping.dest} -> ${mapping.src}`);
-	} catch (error) {
-		console.log(`符号链接失败，改为复制内容：${mapping.src} -> ${mapping.dest}`);
+	} catch (_error) {
+		console.log(
+			`符号链接失败，改为复制内容：${mapping.src} -> ${mapping.dest}`,
+		);
 		copyRecursive(srcPath, destPath);
 	}
 }
@@ -156,10 +154,9 @@ try {
 	// 3. 提交主仓库
 	execSync("git add .", { cwd: rootDir });
 
-	execSync(
-		`git commit -m "chore(content): sync ${branch}@${hash}"`,
-		{ cwd: rootDir },
-	);
+	execSync(`git commit -m "chore(content): sync ${branch}@${hash}"`, {
+		cwd: rootDir,
+	});
 
 	console.log(`已提交内容更新（${branch}@${hash}）`);
 } catch {

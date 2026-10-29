@@ -28,19 +28,14 @@ async function loadPageStyles(htmlPath) {
 		)
 		.map(({ href }) => href);
 
-	const inlineStyles = [
-		...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi),
-	]
+	const inlineStyles = [...html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)]
 		.map((match) => match[1])
 		.join("\n");
 
 	const linkedStyles = await Promise.all(
 		stylesheetUrls.map(async (stylesheetUrl) => {
 			const pathname = decodeURIComponent(stylesheetUrl.split(/[?#]/, 1)[0]);
-			if (
-				/^(?:[a-z]+:)?\/\//i.test(pathname) ||
-				pathname.startsWith("data:")
-			) {
+			if (/^(?:[a-z]+:)?\/\//i.test(pathname) || pathname.startsWith("data:")) {
 				return "";
 			}
 
@@ -50,9 +45,7 @@ async function loadPageStyles(htmlPath) {
 			);
 			const relativePath = path.relative(distDirectory, assetPath);
 			if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
-				throw new Error(
-					`Stylesheet escapes dist directory: ${stylesheetUrl}`,
-				);
+				throw new Error(`Stylesheet escapes dist directory: ${stylesheetUrl}`);
 			}
 
 			return readFile(assetPath, "utf8");
@@ -91,7 +84,9 @@ const pages = [
 ];
 
 for (const page of pages) {
-	const { html, loadedCss, stylesheetUrls } = await loadPageStyles(page.htmlPath);
+	const { html, loadedCss, stylesheetUrls } = await loadPageStyles(
+		page.htmlPath,
+	);
 	const missingMarkup = page.requiredMarkup
 		.filter(([token]) => !html.includes(token))
 		.map(([, description]) => description);

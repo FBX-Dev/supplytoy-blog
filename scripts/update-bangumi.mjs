@@ -1,6 +1,6 @@
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const API_BASE = "https://api.bgm.tv";
 const CONFIG_PATH = path.join(
@@ -19,7 +19,7 @@ async function getUserIdFromConfig() {
 			/bangumi:\s*\{[\s\S]*?userId:\s*["']([^"']+)["']/,
 		);
 
-		if (match && match[1]) {
+		if (match?.[1]) {
 			const userId = match[1];
 			if (
 				userId === "your-bangumi-id" ||
@@ -47,11 +47,11 @@ async function getAnimeModeFromConfig() {
 			/anime:\s*\{[\s\S]*?mode:\s*["']([^"']+)["']/,
 		);
 
-		if (match && match[1]) {
+		if (match?.[1]) {
 			return match[1];
 		}
 		return "bangumi";
-	} catch (error) {
+	} catch (_error) {
 		return "bangumi";
 	}
 }
@@ -64,7 +64,7 @@ async function fetchSubjectDetail(subjectId) {
 		const response = await fetch(`${API_BASE}/v0/subjects/${subjectId}`);
 		if (!response.ok) return null;
 		return await response.json();
-	} catch (error) {
+	} catch (_error) {
 		return null;
 	}
 }
@@ -116,9 +116,7 @@ async function fetchCollection(userId, type) {
 
 			if (data.data && data.data.length > 0) {
 				allData = [...allData, ...data.data];
-				process.stdout.write(
-					`   Fetched ${allData.length} records...\r`,
-				);
+				process.stdout.write(`   Fetched ${allData.length} records...\r`);
 			}
 
 			if (!data.data || data.data.length < limit) {
@@ -150,9 +148,7 @@ async function processData(items, status) {
 		const subjectDetail = await fetchSubjectDetail(item.subject_id);
 		await delay(150);
 
-		const year = item.subject?.date
-			? item.subject.date.slice(0, 4)
-			: "Unknown";
+		const year = item.subject?.date ? item.subject.date.slice(0, 4) : "Unknown";
 
 		const rating = item.rate
 			? Number.parseFloat(item.rate.toFixed(1))
@@ -175,8 +171,7 @@ async function processData(items, status) {
 		).trimStart();
 
 		results.push({
-			title:
-				item.subject?.name_cn || item.subject?.name || "Unknown Title",
+			title: item.subject?.name_cn || item.subject?.name || "Unknown Title",
 			status: status,
 			rating: rating,
 			cover: item.subject?.images?.medium || "/assets/anime/default.webp",

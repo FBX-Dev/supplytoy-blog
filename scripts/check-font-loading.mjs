@@ -8,8 +8,7 @@ const MAX_CUSTOM_FONT_BYTES = 8 * 1024 * 1024;
 const ASTRO_ASSET_SEGMENT = "/_astro/";
 const FONT_REFERENCE_PATTERN =
 	/[^\s"'()<>]+?\.(?:woff2?|ttf|otf)(?:[?#][^\s"'()<>]*)?/gi;
-const CUSTOM_FONT_VARIABLE_PATTERN =
-	/--font-(?:body|cjk|jetbrains-mono)\s*:/;
+const CUSTOM_FONT_VARIABLE_PATTERN = /--font-(?:body|cjk|jetbrains-mono)\s*:/;
 const STYLE_BLOCK_PATTERN = /<style\b[^>]*>([\s\S]*?)<\/style>/gi;
 
 async function collectFiles(directory) {
@@ -128,7 +127,9 @@ if (
 	process.env.MIZUKI_FONT_MODE === "system" &&
 	customFontReferences.length > 0
 ) {
-	throw new Error("System font mode must not emit Astro custom font references.");
+	throw new Error(
+		"System font mode must not emit Astro custom font references.",
+	);
 }
 
 console.log(

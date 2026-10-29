@@ -32,12 +32,10 @@ const { chromium } = pw;
 const BASE = process.env.ADMIN_BASE || "https://supplytoy.com/admin/";
 const TOKEN = (
 	process.env.GITHUB_TOKEN ||
-	fs
-		.readFileSync(
-			process.env.GH_TOKEN_FILE ||
-				"D:/workbuddy/github-for-workbuddy-token.txt",
-			"utf8",
-		)
+	fs.readFileSync(
+		process.env.GH_TOKEN_FILE || "D:/workbuddy/github-for-workbuddy-token.txt",
+		"utf8",
+	)
 ).trim();
 
 // 造出 /signin/<base64> 里的载荷
@@ -74,7 +72,10 @@ const bodyText = (await page.textContent("body")) || "";
 const title = await page.title();
 console.log("   title:", title);
 console.log("   body 文本长度:", bodyText.trim().length);
-console.log("   body 前 600 字:", JSON.stringify(bodyText.trim().slice(0, 600)));
+console.log(
+	"   body 前 600 字:",
+	JSON.stringify(bodyText.trim().slice(0, 600)),
+);
 
 // 登录成功的正面判据
 const loggedInHints = [
@@ -107,15 +108,21 @@ console.log("   候选条目数:", entries.length);
 console.log("   前 8 条:", entries.slice(0, 8));
 
 console.log("\n--- GitHub API 调用（前 15）---");
-ghCalls.slice(0, 15).forEach((c) => console.log("  " + c));
+ghCalls.slice(0, 15).forEach((c) => {
+	console.log(`  ${c}`);
+});
 console.log("   合计:", ghCalls.length);
 
 console.log("\n--- 控制台（前 20）---");
-consoleMsgs.slice(0, 20).forEach((m) => console.log("  " + m));
+consoleMsgs.slice(0, 20).forEach((m) => {
+	console.log(`  ${m}`);
+});
 
 console.log("\n--- 失败请求 ---");
 failedReqs.length
-	? failedReqs.slice(0, 10).forEach((r) => console.log("  " + r))
+	? failedReqs.slice(0, 10).forEach((r) => {
+			console.log(`  ${r}`);
+		})
 	: console.log("  (无)");
 
 await page.screenshot({
@@ -126,8 +133,14 @@ await page.screenshot({
 console.log("\n=== 判定 ===");
 const okLoggedIn = !stillLogin && foundIn.length > 0;
 const okGh = ghCalls.length > 0;
-console.log(okLoggedIn ? "PASS 已进入内容管理界面" : "FAIL 仍在登录页或界面未就绪");
-console.log(okGh ? `PASS 观察到 ${ghCalls.length} 次 GitHub API 调用` : "FAIL 无 GitHub API 调用");
+console.log(
+	okLoggedIn ? "PASS 已进入内容管理界面" : "FAIL 仍在登录页或界面未就绪",
+);
+console.log(
+	okGh
+		? `PASS 观察到 ${ghCalls.length} 次 GitHub API 调用`
+		: "FAIL 无 GitHub API 调用",
+);
 
 await browser.close();
 process.exit(okLoggedIn && okGh ? 0 : 1);

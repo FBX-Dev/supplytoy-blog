@@ -44,9 +44,9 @@ describe("Custom font loading boundary", () => {
 
 		let leftover = [];
 		try {
-			leftover = (await readdir(new URL("../src/assets/fonts", import.meta.url))).filter(
-				(name) => /\.(?:ttf|otf|woff2?)$/i.test(name),
-			);
+			leftover = (
+				await readdir(new URL("../src/assets/fonts", import.meta.url))
+			).filter((name) => /\.(?:ttf|otf|woff2?)$/i.test(name));
 		} catch (error) {
 			if (error?.code !== "ENOENT") throw error;
 		}
@@ -97,7 +97,10 @@ describe("Custom font loading boundary", () => {
 			new URL("../src/pages/posts/[...slug].astro", import.meta.url),
 			"utf8",
 		);
-		assert.doesNotMatch(postPage, /import\.meta\.glob<ImageMetadata>\(\s*"\.\.\/\.\.\/\*\*"/);
+		assert.doesNotMatch(
+			postPage,
+			/import\.meta\.glob<ImageMetadata>\(\s*"\.\.\/\.\.\/\*\*"/,
+		);
 		assert.equal(
 			(
 				postPage.match(

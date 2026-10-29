@@ -193,13 +193,11 @@ export class BackToTopHandler {
 
 	private updatePageOverlayScroll(scrollTop: number): void {
 		const overlay = document.getElementById("banner-page-overlay");
-		if (!overlay || !overlay.style.opacity) {
+		if (!overlay?.style.opacity) {
 			return;
 		}
 
-		const isFullscreen = document.body.classList.contains(
-			"fullscreen-banner",
-		);
+		const isFullscreen = document.body.classList.contains("fullscreen-banner");
 		const bannerHeight = isFullscreen
 			? window.innerHeight
 			: window.innerHeight * (BANNER_HEIGHT_HOME / 100);

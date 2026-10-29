@@ -65,11 +65,7 @@ export class CodeBlockCollapser {
 		const pre = frame?.querySelector(":scope > pre");
 		const lineCount = pre?.querySelectorAll(".ec-line").length ?? 0;
 
-		if (
-			!frame ||
-			!pre ||
-			!shouldAutoCollapse(lineCount, this.config)
-		) {
+		if (!frame || !pre || !shouldAutoCollapse(lineCount, this.config)) {
 			return;
 		}
 
@@ -88,7 +84,9 @@ export class CodeBlockCollapser {
 		const button = this.createToggleButton();
 		frame.append(button);
 		this.updateButton(button, collapsed);
-		button.addEventListener("click", () => this.toggleCollapse(codeBlock, button));
+		button.addEventListener("click", () =>
+			this.toggleCollapse(codeBlock, button),
+		);
 	}
 
 	calculatePreviewHeight(pre) {
@@ -121,10 +119,7 @@ export class CodeBlockCollapser {
 
 	updateButton(button, collapsed) {
 		button.setAttribute("aria-expanded", String(!collapsed));
-		button.setAttribute(
-			"aria-label",
-			collapsed ? "展开代码块" : "折叠代码块",
-		);
+		button.setAttribute("aria-label", collapsed ? "展开代码块" : "折叠代码块");
 		button.title = collapsed ? "展开代码块" : "折叠代码块";
 	}
 
@@ -150,7 +145,9 @@ export class CodeBlockCollapser {
 						node.matches(".expressive-code") ||
 						node.querySelector(".expressive-code")
 					) {
-						this.setupCodeBlocks(node.matches(".expressive-code") ? node.parentElement : node);
+						this.setupCodeBlocks(
+							node.matches(".expressive-code") ? node.parentElement : node,
+						);
 						return;
 					}
 				}

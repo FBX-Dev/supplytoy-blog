@@ -27,8 +27,8 @@
  * 🔴 sharp 是 CJS，ESM 下 NODE_PATH 无效 → 用 createRequire 载入。
  */
 import fs from "node:fs";
-import path from "node:path";
 import { createRequire } from "node:module";
+import path from "node:path";
 
 const require = createRequire(import.meta.url);
 const sharp = require("sharp");
@@ -53,9 +53,9 @@ function pickPng(dir) {
 }
 
 /** sRGB → 线性亮度，用于算 WCAG 对比度。 */
-function lin(v) {
-	v /= 255;
-	return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+function _lin(v) {
+	const s = v / 255;
+	return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
 }
 const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
@@ -101,7 +101,7 @@ async function reportBandLum(outPath, width, height, band = [0.42, 0.54]) {
 
 async function toWebp(src, outPath, width, height, opts = {}) {
 	const { quality = 82, position = "center", checkBand = null } = opts;
-	let pipe = sharp(src).resize(width, height, { fit: "cover", position });
+	const pipe = sharp(src).resize(width, height, { fit: "cover", position });
 	await pipe.webp({ quality, effort: 6 }).toFile(outPath);
 
 	const meta = await sharp(outPath).metadata();
@@ -110,13 +110,17 @@ async function toWebp(src, outPath, width, height, opts = {}) {
 			`尺寸不符 ${rel(outPath)} → ${meta.width}×${meta.height}，期望 ${width}×${height}`,
 		);
 	}
-	log(`  ✓ ${rel(outPath).padEnd(44)} ${meta.width}×${meta.height}  ${fs.statSync(outPath).size} B`);
+	log(
+		`  ✓ ${rel(outPath).padEnd(44)} ${meta.width}×${meta.height}  ${fs.statSync(outPath).size} B`,
+	);
 	if (checkBand) {
 		const lum = await reportBandLum(outPath, width, height, checkBand);
 		// 硬失败：轮播图必须是干净原图。压暗了说明遮罩被重新烘焙，
 		// 那会让首页/移动端（根本没文字）也跟着发灰。
 		if (lum < 170) {
-			throw new Error(`${rel(outPath)} 标题带亮度仅 ${lum.toFixed(0)}，低于 170，疑似重新烘焙了遮罩`);
+			throw new Error(
+				`${rel(outPath)} 标题带亮度仅 ${lum.toFixed(0)}，低于 170，疑似重新烘焙了遮罩`,
+			);
 		}
 	}
 }
@@ -153,50 +157,94 @@ async function writeIco(srcPng, outPath, sizes) {
 		entries.push(e);
 		offset += buf.length;
 	}
-	fs.writeFileSync(outPath, Buffer.concat([header, ...entries, ...pngs.map((p) => p.buf)]));
-	log(`  ✓ ${rel(outPath).padEnd(44)} ICO [${sizes.join(",")}]  ${fs.statSync(outPath).size} B`);
+	fs.writeFileSync(
+		outPath,
+		Buffer.concat([header, ...entries, ...pngs.map((p) => p.buf)]),
+	);
+	log(
+		`  ✓ ${rel(outPath).padEnd(44)} ICO [${sizes.join(",")}]  ${fs.statSync(outPath).size} B`,
+	);
 }
 
 // ---------- 1. 桌面轮播 1920×1080 ----------
 // 四个互不重复的玩具主题：积木套圈 / 形状盒算盘 / 玩具车小火车 / 毛绒玩偶茶具
 // 🔴 不烘焙遮罩：保持干净鲜亮的马卡龙原图，压暗交给 CSS 按需叠加（见文件头说明）。
 log("【1】桌面轮播 1920×1080（干净原图，不烘焙遮罩）");
-const desktopSrc = [pickPng("t-blocks"), pickPng("t-shapes"), pickPng("d5"), pickPng("d4")];
+const desktopSrc = [
+	pickPng("t-blocks"),
+	pickPng("t-shapes"),
+	pickPng("d5"),
+	pickPng("d4"),
+];
 for (let i = 0; i < 4; i++) {
-	await toWebp(desktopSrc[i], path.join(ROOT, `public/assets/desktop-banner/${i + 1}.webp`), 1920, 1080, {
-		quality: 82,
-		checkBand: [0.42, 0.54],
-	});
+	await toWebp(
+		desktopSrc[i],
+		path.join(ROOT, `public/assets/desktop-banner/${i + 1}.webp`),
+		1920,
+		1080,
+		{
+			quality: 82,
+			checkBand: [0.42, 0.54],
+		},
+	);
 }
 
 // ---------- 2. 移动轮播 1000×1414 ----------
 log("【2】移动轮播 1000×1414（干净原图，不烘焙遮罩）");
 const mobileSrc = [pickPng("m1"), pickPng("m2"), pickPng("m3"), pickPng("m4")];
 for (let i = 0; i < 4; i++) {
-	await toWebp(mobileSrc[i], path.join(ROOT, `public/assets/mobile-banner/${i + 1}.webp`), 1000, 1414, {
-		quality: 82,
-		checkBand: [0.42, 0.54],
-	});
+	await toWebp(
+		mobileSrc[i],
+		path.join(ROOT, `public/assets/mobile-banner/${i + 1}.webp`),
+		1000,
+		1414,
+		{
+			quality: 82,
+			checkBand: [0.42, 0.54],
+		},
+	);
 }
 
 // ---------- 3. 头像 640×640（不加遮罩） ----------
 log("【3】头像 640×640");
-await toWebp(pickPng("avatar"), path.join(ROOT, "src/assets/images/avatar.webp"), 640, 640, { quality: 88 });
+await toWebp(
+	pickPng("avatar"),
+	path.join(ROOT, "src/assets/images/avatar.webp"),
+	640,
+	640,
+	{ quality: 88 },
+);
 
 // ---------- 4. favicon ----------
 log("【4】favicon（多尺寸 ICO）");
-await writeIco(pickPng("icon"), path.join(ROOT, "public/favicon/favicon.ico"), [16, 32, 48, 64]);
+await writeIco(
+	pickPng("icon"),
+	path.join(ROOT, "public/favicon/favicon.ico"),
+	[16, 32, 48, 64],
+);
 
 // ---------- 5. 导航栏 icon ----------
 log("【5】导航栏 icon（text 模式实际渲染的那个）");
-await toWebp(pickPng("icon"), path.join(ROOT, "public/assets/home/home.webp"), 1024, 1024, { quality: 90 });
+await toWebp(
+	pickPng("icon"),
+	path.join(ROOT, "public/assets/home/home.webp"),
+	1024,
+	1024,
+	{ quality: 90 },
+);
 
 // ---------- 6. 导航栏 logo（785×256，从横幅左下角裁） ----------
 log("【6】导航栏 logo 785×256（当前 text 模式不渲染，仅去除 npuai 残留）");
-await toWebp(desktopSrc[0], path.join(ROOT, "public/assets/home/default-logo.webp"), 785, 256, {
-	quality: 86,
-	position: "southwest",
-});
+await toWebp(
+	desktopSrc[0],
+	path.join(ROOT, "public/assets/home/default-logo.webp"),
+	785,
+	256,
+	{
+		quality: 86,
+		position: "southwest",
+	},
+);
 
 // ---------- 7. 樱花贴图（程序化 SVG，透明底） ----------
 log("【7】樱花贴图 328×304（程序化绘制，透明底）");
@@ -215,7 +263,7 @@ await sharp(Buffer.from(petalSvg))
 	.webp({ quality: 90, effort: 6 })
 	.toFile(path.join(ROOT, "public/sakura.webp"));
 log(
-	`  ✓ public/sakura.webp`.padEnd(46) +
+	"  ✓ public/sakura.webp".padEnd(46) +
 		` 328×304  ${fs.statSync(path.join(ROOT, "public/sakura.webp")).size} B`,
 );
 
@@ -230,6 +278,6 @@ for (const kind of ["desktop-banner", "mobile-banner"]) {
 		fs.copyFileSync(src, dst);
 	}
 }
-log(`  ✓ 已同步 8 个副本`);
+log("  ✓ 已同步 8 个副本");
 
 log("\n全部转换完成。");

@@ -5,14 +5,15 @@
  * 直连线上，不走代理。
  */
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const sharp = require("sharp");
 
-const PW = "C:/Users/dynabook/.workbuddy/binaries/node/workspace/node_modules/playwright/index.js";
+const PW =
+	"C:/Users/dynabook/.workbuddy/binaries/node/workspace/node_modules/playwright/index.js";
 const mod = await import(pathToFileURL(PW).href);
 const pw = mod.default ?? mod;
 
@@ -20,8 +21,8 @@ const OUT = path.resolve("_tmp_verify/live-final");
 fs.mkdirSync(OUT, { recursive: true });
 
 const lin = (v) => {
-	v /= 255;
-	return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+	const s = v / 255;
+	return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
 };
 const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
@@ -34,8 +35,12 @@ const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
  * （否则量到 `filter: blur(6px)` 的中间态）。见 `_verify_readability.mjs`。
  */
 async function edgeStats(buf, coreMin = 245, nonCoreMax = 200, boundaryR = 1) {
-	const { data, info } = await sharp(buf).raw().toBuffer({ resolveWithObject: true });
-	const W = info.width, H = info.height, ch = info.channels;
+	const { data, info } = await sharp(buf)
+		.raw()
+		.toBuffer({ resolveWithObject: true });
+	const W = info.width;
+	const H = info.height;
+	const ch = info.channels;
 	const lum = new Float64Array(W * H);
 	for (let p = 0, i = 0; i < data.length; i += ch, p++) {
 		lum[p] = lumOf([data[i], data[i + 1], data[i + 2]]);
@@ -49,13 +54,21 @@ async function edgeStats(buf, coreMin = 245, nonCoreMax = 200, boundaryR = 1) {
 			let isB = false;
 			for (let dy = -boundaryR; dy <= boundaryR && !isB; dy++) {
 				for (let dx = -boundaryR; dx <= boundaryR; dx++) {
-					if (at(x + dx, y + dy) < nonCoreMax) { isB = true; break; }
+					if (at(x + dx, y + dy) < nonCoreMax) {
+						isB = true;
+						break;
+					}
 				}
 			}
 			if (!isB) continue;
 			let dk = 255;
 			for (let d = 3; d <= 10; d++) {
-				for (const c of [at(x - d, y), at(x + d, y), at(x, y - d), at(x, y + d)]) {
+				for (const c of [
+					at(x - d, y),
+					at(x + d, y),
+					at(x, y - d),
+					at(x, y + d),
+				]) {
 					if (c < dk) dk = c;
 				}
 			}
@@ -64,7 +77,8 @@ async function edgeStats(buf, coreMin = 245, nonCoreMax = 200, boundaryR = 1) {
 	}
 	if (!ratios.length) return null;
 	ratios.sort((a, b) => a - b);
-	const q = (p) => ratios[Math.min(ratios.length - 1, Math.floor(ratios.length * p))];
+	const q = (p) =>
+		ratios[Math.min(ratios.length - 1, Math.floor(ratios.length * p))];
 	return { n: ratios.length, p5: q(0.05), median: q(0.5) };
 }
 
@@ -72,7 +86,10 @@ const browser = await pw.chromium.launch();
 
 // ---- 桌面文章页：持续采样取最差 ----
 {
-	const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+	const ctx = await browser.newContext({
+		viewport: { width: 1920, height: 1080 },
+		deviceScaleFactor: 1,
+	});
 	const page = await ctx.newPage();
 	await page.goto("https://supplytoy.com/post/advent-calendars-for-kids", {
 		waitUntil: "domcontentloaded",
@@ -81,7 +98,7 @@ const browser = await pw.chromium.launch();
 	await page.waitForTimeout(5000);
 	await page.screenshot({ path: path.join(OUT, "article-desktop.png") });
 
-	const box = await page.evaluate(() => {
+	const _box = await page.evaluate(() => {
 		const overlay = document.getElementById("banner-page-overlay");
 		const inner = overlay?.querySelector(":scope > div");
 		const r = inner?.getBoundingClientRect();
@@ -99,7 +116,9 @@ const browser = await pw.chromium.launch();
 		};
 	});
 	const shadow = await page.evaluate(
-		() => getComputedStyle(document.getElementById("page-overlay-title")).textShadow,
+		() =>
+			getComputedStyle(document.getElementById("page-overlay-title"))
+				.textShadow,
 	);
 	console.log(`  标题描边：${shadow}`);
 	let worst = { p5: 99, median: 0 };
@@ -122,7 +141,12 @@ const browser = await pw.chromium.launch();
 for (const [vp, viewport, label, url] of [
 	["desktop", { width: 1920, height: 1080 }, "首页", "https://supplytoy.com/"],
 	["mobile", { width: 390, height: 844 }, "首页", "https://supplytoy.com/"],
-	["mobile", { width: 390, height: 844 }, "文章页", "https://supplytoy.com/post/advent-calendars-for-kids"],
+	[
+		"mobile",
+		{ width: 390, height: 844 },
+		"文章页",
+		"https://supplytoy.com/post/advent-calendars-for-kids",
+	],
 ]) {
 	const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
 	const page = await ctx.newPage();
@@ -130,7 +154,9 @@ for (const [vp, viewport, label, url] of [
 	await page.waitForTimeout(4000);
 	const f = path.join(OUT, `${vp}-${label}.png`);
 	await page.screenshot({ path: f });
-	console.log(`  截图 ${vp}/${label} → ${path.relative(process.cwd(), f).replace(/\\/g, "/")}`);
+	console.log(
+		`  截图 ${vp}/${label} → ${path.relative(process.cwd(), f).replace(/\\/g, "/")}`,
+	);
 	await ctx.close();
 }
 

@@ -15,9 +15,9 @@
  * 前置：本地 dist 服务已起在 4399（`node _serve_dist.cjs`）。
  */
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const sharp = require("sharp");
@@ -33,13 +33,13 @@ const OUT = path.resolve("_tmp_verify/no-scrim");
 fs.mkdirSync(OUT, { recursive: true });
 
 const lin = (v) => {
-	v /= 255;
-	return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+	const s = v / 255;
+	return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
 };
 const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 
 /** 采样一块区域的平均底色亮度与白字对比度（剔除白字像素本身） */
-async function bandStats(buf) {
+async function _bandStats(buf) {
 	const { data, info } = await sharp(buf)
 		.raw()
 		.toBuffer({ resolveWithObject: true });
@@ -71,7 +71,7 @@ const CASES = [
 	["mobile", { width: 390, height: 844 }, "首页", "/"],
 	["mobile", { width: 390, height: 844 }, "文章页", POST],
 ];
-let articleDesktopBox = null;
+let _articleDesktopBox = null;
 for (const [vpName, viewport, label, url] of CASES) {
 	const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
 	const page = await ctx.newPage();
@@ -94,7 +94,8 @@ for (const [vpName, viewport, label, url] of CASES) {
 			// 任何非 none 的背景都算遮罩残留（含内联 style 注入）
 			bg: cs.backgroundImage === "none" ? "none" : "has-gradient",
 			inlineBg: o.style.backgroundImage || "",
-			titleText: document.getElementById("page-overlay-title")?.textContent || "",
+			titleText:
+				document.getElementById("page-overlay-title")?.textContent || "",
 			innerTop: ri ? Math.round(ri.top) : null,
 			innerHeight: ri ? Math.round(ri.height) : null,
 		};
@@ -110,7 +111,7 @@ for (const [vpName, viewport, label, url] of CASES) {
 		`  ${ok ? "✓" : "✗"} ${vpName}/${label}  display=${info.display} h=${info.height} bg=${info.bg}${info.inlineBg ? " 🔴 内联背景残留" : ""}  标题「${info.titleText || "（空）"}」`,
 	);
 	if (vpName === "desktop" && label === "文章页" && info.innerHeight) {
-		articleDesktopBox = { top: info.innerTop, height: info.innerHeight };
+		_articleDesktopBox = { top: info.innerTop, height: info.innerHeight };
 	}
 	await page.screenshot({ path: path.join(OUT, `${vpName}-${label}.png`) });
 	await ctx.close();

@@ -1,5 +1,5 @@
 {
-	"$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+	"$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
 	"vcs": {
 		"enabled": false,
 		"clientKind": "git",
@@ -9,12 +9,21 @@
 		"includes": [
 			"**",
 			"!**/src/**/*.css",
-			"!**/dist/**/*",
-			"!**/node_modules/**/*",
-			"!**/.astro/**/*",
-			"!**/public/**/*",
-			"!**/demo/**/*",
-			"!**/scripts/**/*"
+			"!**/dist",
+			"!**/node_modules",
+			"!**/.astro",
+			"!**/public",
+			"!**/demo",
+			"!**/fuwari",
+			"!**/content",
+			"!**/cache",
+			"!**/plans",
+			"!**/.lighthouseci",
+			"!**/.wrangler",
+			"!**/_trash",
+			"!**/_tmp_verify",
+			"!**/_tmp_images",
+			"!**/docs/editor"
 		]
 	},
 	"formatter": {
@@ -26,7 +35,7 @@
 	"linter": {
 		"enabled": true,
 		"rules": {
-			"recommended": true,
+			"preset": "recommended",
 			"style": {
 				"noParameterAssign": "error",
 				"useAsConstAssertion": "error",

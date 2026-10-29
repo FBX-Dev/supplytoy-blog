@@ -26,7 +26,9 @@ const { chromium } = pw;
 const URL = process.env.ADMIN_BASE || "https://supplytoy.com/admin/";
 
 const browser = await chromium.launch({ headless: true });
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const ctx = await browser.newContext({
+	viewport: { width: 1440, height: 900 },
+});
 const page = await ctx.newPage();
 
 const consoleMsgs = [];
@@ -45,12 +47,15 @@ await page.waitForTimeout(6000);
 
 const title = await page.title();
 const bodyText = (await page.textContent("body")) || "";
-const html = await page.content();
+const _html = await page.content();
 
 console.log("\n--- 页面 ---");
 console.log("title:", title);
 console.log("body 可见文本长度:", bodyText.trim().length);
-console.log("body 文本前 400 字:", JSON.stringify(bodyText.trim().slice(0, 400)));
+console.log(
+	"body 文本前 400 字:",
+	JSON.stringify(bodyText.trim().slice(0, 400)),
+);
 
 // 关键：Sveltia 的登录入口关键字。
 // ⚠️ 界面语言由浏览器 locale 自动决定 —— 中文环境会显示「使用访问令牌登录」，
@@ -93,11 +98,17 @@ for (const m of consoleMsgs) {
 }
 
 console.log("\n--- 控制台（全部）---");
-consoleMsgs.slice(0, 30).forEach((m) => console.log("  " + m));
+consoleMsgs.slice(0, 30).forEach((m) => {
+	console.log(`  ${m}`);
+});
 if (consoleMsgs.length === 0) console.log("  (无输出)");
 
 console.log("\n--- 失败请求 ---");
-failedReqs.length ? failedReqs.forEach((r) => console.log("  " + r)) : console.log("  (无)");
+failedReqs.length
+	? failedReqs.forEach((r) => {
+			console.log(`  ${r}`);
+		})
+	: console.log("  (无)");
 
 console.log("\n--- config.yml 是否被抓取 ---");
 const gotConfig = await page.evaluate(() =>
@@ -133,8 +144,12 @@ const okNo404 = failedReqs.length === 0;
 // 配置解析成功 = 有 dump 日志，或至少登录界面出来了（说明没在解析阶段就崩）
 const okConfigParsed = Boolean(cfgLog) || okLogin;
 console.log(okLogin ? "PASS 出现登录界面关键字" : "FAIL 未见登录界面关键字");
-console.log(okNoFatal ? "PASS 无配置类致命错误" : `FAIL 致命错误 ${fatals.length} 条`);
-console.log(okNo404 ? "PASS 无 404 资源" : `FAIL ${failedReqs.length} 个请求失败`);
+console.log(
+	okNoFatal ? "PASS 无配置类致命错误" : `FAIL 致命错误 ${fatals.length} 条`,
+);
+console.log(
+	okNo404 ? "PASS 无 404 资源" : `FAIL ${failedReqs.length} 个请求失败`,
+);
 console.log(
 	okConfigParsed
 		? "PASS 配置已成功解析（未在解析阶段报错）"

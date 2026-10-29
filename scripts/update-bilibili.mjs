@@ -1,6 +1,6 @@
-import fs from "fs/promises";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import axios from "axios";
 import { loadEnv } from "./load-env.js";
 
@@ -47,7 +47,7 @@ async function getUserIdFromConfig() {
 			/bilibili:\s*\{[\s\S]*?vmid:\s*["']([^"']+)["']/,
 		);
 
-		if (match && match[1]) {
+		if (match?.[1]) {
 			const vmid = match[1];
 			if (!vmid || vmid.trim() === "") {
 				console.warn("Warning: vmid in src/config/siteConfig.ts is empty.");
@@ -92,11 +92,11 @@ async function getAnimeModeFromConfig() {
 			/anime:\s*\{[\s\S]*?mode:\s*["']([^"']+)["']/,
 		);
 
-		if (match && match[1]) {
+		if (match?.[1]) {
 			return match[1];
 		}
 		return "bangumi";
-	} catch (error) {
+	} catch (_error) {
 		return "bangumi";
 	}
 }
@@ -108,10 +108,7 @@ async function getDataPage(vmid, status, typeNum = 1) {
 		),
 	);
 
-	if (
-		response?.data?.code === 0 &&
-		response?.data?.data?.total !== undefined
-	) {
+	if (response?.data?.code === 0 && response?.data?.data?.total !== undefined) {
 		return {
 			success: true,
 			data: Math.ceil(response.data.data.total / PAGE_SIZE) + 1,
@@ -182,13 +179,10 @@ async function getData(
 		let progress = 0;
 		if (bangumi?.progress) {
 			// progress可能是字符串如"1/14"或数字或空字符串
-			if (
-				typeof bangumi.progress === "string" &&
-				bangumi.progress.trim()
-			) {
+			if (typeof bangumi.progress === "string" && bangumi.progress.trim()) {
 				const progressMatch = bangumi.progress.match(/(\d+)/);
 				if (progressMatch) {
-					progress = parseInt(progressMatch[1], 10) || 0;
+					progress = Number.parseInt(progressMatch[1], 10) || 0;
 				}
 			} else if (typeof bangumi.progress === "number") {
 				progress = bangumi.progress;
@@ -264,7 +258,7 @@ async function getData(
 			title: bangumi?.title || "Unknown",
 			status: STATUS_MAP[status] || "planned",
 			rating: bangumi?.rating?.score
-				? parseFloat(bangumi.rating.score.toFixed(1))
+				? Number.parseFloat(bangumi.rating.score.toFixed(1))
 				: 0,
 			cover: cover,
 			description: description,
@@ -289,7 +283,7 @@ async function processData(
 ) {
 	const page = await getDataPage(vmid, status, typeNum);
 	if (!page?.success) {
-		console.error(`Get bangumi data error:`, page?.data);
+		console.error("Get bangumi data error:", page?.data);
 		return [];
 	}
 
@@ -340,14 +334,7 @@ async function main() {
 
 	// 获取三种状态的数据 (1=想看, 2=在看, 3=已看)
 	console.log("\nFetching Bilibili bangumi data...");
-	const planned = await processData(
-		VMID,
-		1,
-		1,
-		useWebp,
-		coverMirror,
-		SESSDATA,
-	);
+	const planned = await processData(VMID, 1, 1, useWebp, coverMirror, SESSDATA);
 	const watching = await processData(
 		VMID,
 		2,

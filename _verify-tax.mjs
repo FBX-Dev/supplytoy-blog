@@ -47,8 +47,9 @@ for (const [s, { name, cnt }] of bySlug) {
 		continue;
 	}
 	const s2 = fs.readFileSync(p, "utf8");
-	const n = new Set([...s2.matchAll(/href="(\/post\/[^"]*)"/g)].map((m) => m[1]))
-		.size;
+	const n = new Set(
+		[...s2.matchAll(/href="(\/post\/[^"]*)"/g)].map((m) => m[1]),
+	).size;
 	checked++;
 	if (n !== cnt) bad.push([name, `源${cnt} vs 页${n}`]);
 }

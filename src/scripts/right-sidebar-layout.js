@@ -6,11 +6,16 @@
  * @param {string} pageType - 页面类型（projects, skills等）
  */
 function isLayoutSwitchEnabled() {
-	return document.documentElement.getAttribute("data-post-list-layout-enabled") !== "false";
+	return (
+		document.documentElement.getAttribute("data-post-list-layout-enabled") !==
+		"false"
+	);
 }
 
 function getPostListLayout() {
-	return isLayoutSwitchEnabled() ? (localStorage.getItem("postListLayout") || "list") : "list";
+	return isLayoutSwitchEnabled()
+		? localStorage.getItem("postListLayout") || "list"
+		: "list";
 }
 
 function applyCurrentPageLayout() {
@@ -21,7 +26,7 @@ function applyCurrentPageLayout() {
 	}
 }
 
-function initPageLayout(pageType) {
+function initPageLayout(_pageType) {
 	applyCurrentPageLayout();
 
 	// 监听布局切换事件

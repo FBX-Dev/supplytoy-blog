@@ -18,7 +18,11 @@ function findLink(root, href) {
 }
 
 function assertNoExecutableMarkup(root, label) {
-	assert.equal(root.querySelector("script"), null, `${label} contains a script`);
+	assert.equal(
+		root.querySelector("script"),
+		null,
+		`${label} contains a script`,
+	);
 	for (const node of root.querySelectorAll("*")) {
 		for (const attribute of Object.keys(node.attributes)) {
 			assert.doesNotMatch(
@@ -35,13 +39,19 @@ function assertAbsoluteFeedUrls(root, label) {
 		for (const attribute of ["href", "src"]) {
 			const value = node.getAttribute(attribute);
 			if (!value || /^(?:#|data:|mailto:|tel:)/i.test(value)) continue;
-			assert.ok(URL.canParse(value), `${label} has relative ${attribute}: ${value}`);
+			assert.ok(
+				URL.canParse(value),
+				`${label} has relative ${attribute}: ${value}`,
+			);
 		}
 	}
 	for (const node of root.querySelectorAll("[srcset]")) {
 		for (const candidate of node.getAttribute("srcset").split(",")) {
 			const value = candidate.trim().split(/\s+/)[0];
-			assert.ok(URL.canParse(value), `${label} has relative srcset URL: ${value}`);
+			assert.ok(
+				URL.canParse(value),
+				`${label} has relative srcset URL: ${value}`,
+			);
 		}
 	}
 }
@@ -51,11 +61,23 @@ function assertRenderedFixture(root, label, { feed = false } = {}) {
 	assert.match(html, /data-content-pipeline-fixture/);
 	assert.match(html, /This panel is rendered by an imported Astro component/);
 	assert.match(html, /This live expression counts 3 topics/);
-	assert.ok(root.querySelector(".admonition"), `${label} is missing its callout`);
-	assert.ok(root.querySelector(".card-wiki-link"), `${label} is missing its Wiki card`);
+	assert.ok(
+		root.querySelector(".admonition"),
+		`${label} is missing its callout`,
+	);
+	assert.ok(
+		root.querySelector(".card-wiki-link"),
+		`${label} is missing its Wiki card`,
+	);
 	assert.ok(root.querySelector("math"), `${label} is missing MathML`);
-	assert.ok(root.querySelector(".rehype-code-group"), `${label} is missing its code group`);
-	assert.ok(root.querySelector(".wlc-cover-image"), `${label} is missing its Wiki cover`);
+	assert.ok(
+		root.querySelector(".rehype-code-group"),
+		`${label} is missing its code group`,
+	);
+	assert.ok(
+		root.querySelector(".wlc-cover-image"),
+		`${label} is missing its Wiki cover`,
+	);
 	assert.ok(
 		root.querySelector(".markdown-image-caption"),
 		`${label} is missing its image caption`,
@@ -125,7 +147,11 @@ assert.ok(atomEntry, "Atom fixture entry is missing");
 
 const rssContent = rssItem["content:encoded"];
 const atomContent = atomEntry.content.__cdata;
-assert.equal(rssContent.trim(), atomContent.trim(), "RSS and Atom content diverged");
+assert.equal(
+	rssContent.trim(),
+	atomContent.trim(),
+	"RSS and Atom content diverged",
+);
 
 assertRenderedFixture(parse(pageHtml), "page");
 assertRenderedFixture(parse(rssContent), "RSS", { feed: true });

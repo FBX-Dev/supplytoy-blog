@@ -29,7 +29,7 @@ function walk(dir, out = []) {
 
 const all = walk(DIST);
 const html = all.filter((f) => f.endsWith(".html"));
-const rel = (f) => "/" + path.relative(DIST, f).replace(/\\/g, "/");
+const rel = (f) => `/${path.relative(DIST, f).replace(/\\/g, "/")}`;
 const read = (f) => fs.readFileSync(f, "utf8");
 
 // 🔴 期望值全部从**源内容**动态派生，不写死。
@@ -38,9 +38,7 @@ const read = (f) => fs.readFileSync(f, "utf8");
 // 现在改成「源 md 数 = 产物文章页数」「sitemap 条数 = 各组成部分之和」，
 // 这样断言仍然严格（数量必须自洽），但不会随批次增长而失效。
 const SRC_POSTS = path.resolve("src/content/posts");
-const srcPostFiles = fs
-	.readdirSync(SRC_POSTS)
-	.filter((f) => f.endsWith(".md"));
+const srcPostFiles = fs.readdirSync(SRC_POSTS).filter((f) => f.endsWith(".md"));
 const EXPECT_POSTS = srcPostFiles.length;
 
 // 分类页固定 6 个（业务规则，不随批次变）
@@ -137,8 +135,7 @@ console.log("\n【4】亚马逊联盟链接合规");
 	for (const f of html) {
 		const s = read(f);
 		const re = /<a\s[^>]*href="([^"]*)"[^>]*>/gi;
-		let m;
-		while ((m = re.exec(s))) {
+		for (let m = re.exec(s); m; m = re.exec(s)) {
 			const tag = m[0];
 			const href = m[1];
 			if (!/amazon\./i.test(href)) continue;
@@ -156,15 +153,16 @@ console.log("\n【4】亚马逊联盟链接合规");
 	wrongHost === 0
 		? ok("域名全为 www.amazon.com")
 		: bad("出现非 www.amazon.com", `${wrongHost} 条`);
-	dpForm === 0 ? ok("无 /dp/ 或 /gp/product/ 形态") : bad("出现商品直链形态", `${dpForm} 条`);
+	dpForm === 0
+		? ok("无 /dp/ 或 /gp/product/ 形态")
+		: bad("出现商品直链形态", `${dpForm} 条`);
 
 	// 站内链接不得带 rel
 	let internalRel = 0;
 	for (const f of html) {
 		const s = read(f);
 		const re = /<a\s[^>]*href="(\/[^"]*)"[^>]*rel="[^"]*"[^>]*>/gi;
-		let m;
-		while ((m = re.exec(s))) internalRel++;
+		for (let m = re.exec(s); m; m = re.exec(s)) internalRel++;
 	}
 	internalRel === 0
 		? ok("站内链接无 rel（保持裸 <a href>）")
@@ -180,7 +178,8 @@ console.log("\n【5】canonical 与 title");
 		? ok("首页 title = SupplyToy（无副标题）")
 		: bad("首页 title 不符", `实际 "${homeTitle}"`);
 
-	const homeCanon = (home.match(/<link rel="canonical" href="([^"]*)"/) || [])[1];
+	const homeCanon = (home.match(/<link rel="canonical" href="([^"]*)"/) ||
+		[])[1];
 	homeCanon === "https://supplytoy.com/"
 		? ok("首页 canonical")
 		: bad("首页 canonical 不符", `实际 "${homeCanon}"`);
@@ -232,12 +231,20 @@ console.log("\n【6】标签页 noindex 与 sitemap 收录");
 		const tm = fm[1].match(/^tags:\s*\r?\n((?:\s+-\s+.*\r?\n?)*)/m);
 		if (!tm) continue;
 		for (const line of tm[1].split(/\r?\n/)) {
-			const v = line.replace(/^\s*-\s*/, "").trim().replace(/^["']|["']$/g, "");
+			const v = line
+				.replace(/^\s*-\s*/, "")
+				.trim()
+				.replace(/^["']|["']$/g, "");
 			if (v) counts.set(v, (counts.get(v) || 0) + 1);
 		}
 	}
 	const slugify = (n) =>
-		n.trim().toLowerCase().replace(/\./g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+		n
+			.trim()
+			.toLowerCase()
+			.replace(/\./g, "")
+			.replace(/[^a-z0-9]+/g, "-")
+			.replace(/^-+|-+$/g, "");
 	const indexable = new Set(
 		[...counts.entries()].filter(([, c]) => c >= 2).map(([n]) => slugify(n)),
 	);
@@ -299,7 +306,9 @@ console.log("\n【6】标签页 noindex 与 sitemap 收录");
 	!hasPagination ? ok("sitemap 不含分页") : bad("sitemap 混入分页 URL");
 
 	const hasAbout = urls.some((u) => /\/(about|archive|friends)$/.test(u));
-	!hasAbout ? ok("sitemap 不含 /about /archive /friends") : bad("sitemap 混入禁用页");
+	!hasAbout
+		? ok("sitemap 不含 /about /archive /friends")
+		: bad("sitemap 混入禁用页");
 }
 
 // ── 7. 内链完整性 ──────────────────────────────────────
@@ -318,30 +327,29 @@ console.log("\n【7】内链完整性");
 	}
 	set.add("/");
 
-		let checked = 0;
-		const broken = new Map();
-		for (const f of html) {
-			const s = read(f);
-			const re = /href="(\/[^"#?]*)"/g;
-			let m;
-			while ((m = re.exec(s))) {
-				let href = m[1];
-				// ⚠️ 带扩展名的静态资源：必须按原样解析，且路径可能有多层子目录
-				// （如 /_astro/fonts/xxx.woff2）。早先只处理 /x.css 单层形态，
-				// 把嵌套路径当成无扩展名页面去拼 .html，误报了 400+ 条死链。
-				if (/\.[a-z0-9]{2,5}$/i.test(href)) {
-					const p = path.join(DIST, href.replace(/^\//, ""));
-					checked++;
-					if (!fs.existsSync(p)) broken.set(href, (broken.get(href) || 0) + 1);
-					continue;
-				}
-				href = href.replace(/\/$/, "") || "/";
+	let checked = 0;
+	const broken = new Map();
+	for (const f of html) {
+		const s = read(f);
+		const re = /href="(\/[^"#?]*)"/g;
+		for (let m = re.exec(s); m; m = re.exec(s)) {
+			let href = m[1];
+			// ⚠️ 带扩展名的静态资源：必须按原样解析，且路径可能有多层子目录
+			// （如 /_astro/fonts/xxx.woff2）。早先只处理 /x.css 单层形态，
+			// 把嵌套路径当成无扩展名页面去拼 .html，误报了 400+ 条死链。
+			if (/\.[a-z0-9]{2,5}$/i.test(href)) {
+				const p = path.join(DIST, href.replace(/^\//, ""));
 				checked++;
-				if (!set.has(href) && !set.has(`${href}/`)) {
-					broken.set(href, (broken.get(href) || 0) + 1);
-				}
+				if (!fs.existsSync(p)) broken.set(href, (broken.get(href) || 0) + 1);
+				continue;
+			}
+			href = href.replace(/\/$/, "") || "/";
+			checked++;
+			if (!set.has(href) && !set.has(`${href}/`)) {
+				broken.set(href, (broken.get(href) || 0) + 1);
 			}
 		}
+	}
 	broken.size === 0
 		? ok("无死链", `${html.length} 页 / ${checked} 个 href`)
 		: bad(
@@ -357,8 +365,8 @@ console.log("\n【7】内链完整性");
 console.log("\n【8】残留内容扫描");
 {
 	// npuai 品牌 / 中文正文
-	let npuaiHits = [];
-	let cjkHits = [];
+	const npuaiHits = [];
+	const cjkHits = [];
 	for (const f of html) {
 		const s = read(f);
 		if (/\bnpuai\b|NPU AI|FBX-Dev/i.test(s)) npuaiHits.push(rel(f));
@@ -378,9 +386,7 @@ console.log("\n【8】残留内容扫描");
 
 	// HTML 注释应已剥离
 	const sample = read(path.join(DIST, "index.html"));
-	!sample.includes("<!--")
-		? ok("HTML 注释已剥离")
-		: bad("HTML 注释仍在产物中");
+	!sample.includes("<!--") ? ok("HTML 注释已剥离") : bad("HTML 注释仍在产物中");
 }
 
 // ── 9. 站点基础设施 ────────────────────────────────────
@@ -429,8 +435,7 @@ console.log("\n【9】站点基础设施");
 	// （保存会写进别的站）都是硬失败。
 	/admin:\s*\n(?:\s*#.*\n)*\s*repo:\s*FBX-Dev\/supplytoy-blog\b/.test(
 		adminCfg,
-	) ||
-	/^  repo:\s*FBX-Dev\/supplytoy-blog\s*$/m.test(adminCfg)
+	) || /^ {2}repo:\s*FBX-Dev\/supplytoy-blog\s*$/m.test(adminCfg)
 		? ok("admin config repo 指向 FBX-Dev/supplytoy-blog")
 		: adminCfg.includes("REPLACE-WITH-SUPPLYTOY-REPO")
 			? bad("admin config repo 仍是占位符，后台不可用")
@@ -458,11 +463,11 @@ console.log("\n【10】tag/category 页可达性");
 	for (const f of html) {
 		const s = read(f);
 		const re = /href="(\/(?:tag|category)\/[^"]*)"/g;
-		let m;
-		while ((m = re.exec(s))) inbound.add(m[1].replace(/\/$/, ""));
+		for (let m = re.exec(s); m; m = re.exec(s))
+			inbound.add(m[1].replace(/\/$/, ""));
 	}
 	const taxFiles = html.filter((f) => /^\/(tag|category)\//.test(rel(f)));
-	let orphan = [];
+	const orphan = [];
 	for (const f of taxFiles) {
 		const r = rel(f).replace(/\.html$/, "");
 		if (!inbound.has(r)) orphan.push(r);
@@ -472,15 +477,17 @@ console.log("\n【10】tag/category 页可达性");
 				"无孤儿 tax 页",
 				`${taxFiles.length} 页全部有入度，${inbound.size} 个不同目标`,
 			)
-		: bad("存在孤儿 tax 页", `${orphan.length} 个：${orphan.slice(0, 5).join(", ")}`);
+		: bad(
+				"存在孤儿 tax 页",
+				`${orphan.length} 个：${orphan.slice(0, 5).join(", ")}`,
+			);
 
 	// 不得再出现 /archive 形式的筛选链接
 	let archiveLinks = 0;
 	for (const f of html) {
 		const s = read(f);
 		const re = /href="\/archive[^"]*"/g;
-		let m;
-		while ((m = re.exec(s))) archiveLinks++;
+		for (let m = re.exec(s); m; m = re.exec(s)) archiveLinks++;
 	}
 	archiveLinks === 0
 		? ok("无 /archive 筛选链接残留")

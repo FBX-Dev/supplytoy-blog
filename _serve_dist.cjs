@@ -30,7 +30,9 @@ http
 			res.writeHead(404);
 			return res.end("404");
 		}
-		res.writeHead(200, { "Content-Type": mime[p.extname(f)] || "application/octet-stream" });
+		res.writeHead(200, {
+			"Content-Type": mime[p.extname(f)] || "application/octet-stream",
+		});
 		fs.createReadStream(f).pipe(res);
 	})
 	.listen(4399, () => console.log("local dist server on 4399"));

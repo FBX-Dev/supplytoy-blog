@@ -87,7 +87,10 @@ const settingsPanelSource = await readFile(
 );
 const translationSources = await Promise.all(
 	["en", "zh_CN", "zh_TW", "ja"].map((lang) =>
-		readFile(new URL(`../src/i18n/languages/${lang}.ts`, import.meta.url), "utf8"),
+		readFile(
+			new URL(`../src/i18n/languages/${lang}.ts`, import.meta.url),
+			"utf8",
+		),
 	),
 );
 const packageConfig = JSON.parse(

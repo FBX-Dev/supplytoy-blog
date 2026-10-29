@@ -19,7 +19,7 @@ export class SakuraEffectHandler {
 	 */
 	init(widgetConfigs: any): void {
 		const sakuraConfig = widgetConfigs?.sakura;
-		if (!sakuraConfig || !sakuraConfig.enable) {
+		if (!sakuraConfig?.enable) {
 			return;
 		}
 
@@ -92,7 +92,7 @@ export function setupSakuraOnDOMReady(widgetConfigs: any): void {
 			const detail = (e as CustomEvent).detail;
 			if (detail.enabled) {
 				const config = handler.getConfig() || widgetConfigs?.sakura;
-				if (config && config.enable) {
+				if (config?.enable) {
 					initSakura({ ...config, enable: true });
 					(window as any).sakuraInitialized = true;
 				}

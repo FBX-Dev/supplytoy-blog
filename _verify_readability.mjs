@@ -20,9 +20,9 @@
  *    `filter: blur(6px)` 的中间态（探针 v1 就栽在这）。
  */
 import fs from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 const sharp = require("sharp");
@@ -33,8 +33,8 @@ const mod = await import(pathToFileURL(PW).href);
 const pw = mod.default ?? mod;
 
 const lin = (v) => {
-	v /= 255;
-	return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+	const s = v / 255;
+	return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
 };
 const lumOf = (c) => 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
 const ratioOf = (L) => 1.05 / (L + 0.05);
@@ -99,7 +99,8 @@ async function edgeContrast(
 	}
 	if (!ratios.length) return null;
 	ratios.sort((a, b) => a - b);
-	const q = (p) => ratios[Math.min(ratios.length - 1, Math.floor(ratios.length * p))];
+	const q = (p) =>
+		ratios[Math.min(ratios.length - 1, Math.floor(ratios.length * p))];
 	return { n: ratios.length, p5: q(0.05), p25: q(0.25), median: q(0.5) };
 }
 
@@ -120,7 +121,8 @@ await page.goto("http://127.0.0.1:4399/post/advent-calendars-for-kids", {
 });
 await page.waitForFunction(
 	() =>
-		(document.getElementById("page-overlay-title")?.textContent || "").trim().length > 10,
+		(document.getElementById("page-overlay-title")?.textContent || "").trim()
+			.length > 10,
 	{ timeout: 25000 },
 );
 // 🔴 必须等入场动画结束，否则量到 blur(6px) 中间态
@@ -209,7 +211,11 @@ async function sampleReport(label, clip, opts = {}, seconds = 30) {
 }
 
 console.log("\n=== 标题（48px 粗体纯白，大字号 AA 门槛 3:1）===");
-await sample("title", st.title, 3.0, { coreMin: 245, nonCoreMax: 200, boundaryR: 1 });
+await sample("title", st.title, 3.0, {
+	coreMin: 245,
+	nonCoreMax: 200,
+	boundaryR: 1,
+});
 
 // 🔴 meta 行（日期/分类/字数，16px `text-white/80`）—— **只报告，不断言**
 //    实测：即便加描边也只有 ~1.9:1，且试过 5 种组合（见 `_probe_meta_fix.mjs`）
@@ -219,7 +225,11 @@ await sample("title", st.title, 3.0, { coreMin: 245, nonCoreMax: 200, boundaryR:
 //    用户也已明确接受「没有遮罩也能基本看清楚文字」，故不作硬门槛，
 //    但把数字打出来，将来想彻底解决时（如改深色字/加胶囊底）有依据。
 console.log("\n=== meta 行（16px white/80，仅报告）===");
-await sampleReport("meta", st.meta, { coreMin: 243, nonCoreMax: 210, boundaryR: 4 });
+await sampleReport("meta", st.meta, {
+	coreMin: 243,
+	nonCoreMax: 210,
+	boundaryR: 4,
+});
 
 await browser.close();
 console.log(`\n===== 通过 ${pass} / 失败 ${fail} =====`);

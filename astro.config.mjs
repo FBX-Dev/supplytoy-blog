@@ -1,9 +1,9 @@
+import fs from "node:fs";
+import path from "node:path";
 import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import svelte, { vitePreprocess } from "@astrojs/svelte";
-import fs from "node:fs";
-import path from "node:path";
 import { pluginCollapsibleSections } from "@expressive-code/plugin-collapsible-sections";
 import { pluginLineNumbers } from "@expressive-code/plugin-line-numbers";
 import swup from "@swup/astro";
@@ -29,6 +29,7 @@ import {
 	permalinkConfig,
 	siteConfig,
 } from "./src/config/index.ts";
+import { stripHtmlComments } from "./src/integrations/strip-html-comments.mjs";
 import { buildIconInclude } from "./src/plugins/astro-icon-include.mjs";
 import { pluginCustomCopyButton } from "./src/plugins/expressive-code/custom-copy-button.js";
 import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
@@ -50,7 +51,6 @@ import { remarkMermaid } from "./src/plugins/remark-mermaid.js";
 import { remarkPlantuml } from "./src/plugins/remark-plantuml.mjs";
 import { remarkWikiLink } from "./src/plugins/remark-wiki-link.mjs";
 import { resolveFontMode } from "./src/utils/fontMode.ts";
-import { stripHtmlComments } from "./src/integrations/strip-html-comments.mjs";
 
 const customFontsEnabled = resolveFontMode(siteConfig) === "custom";
 

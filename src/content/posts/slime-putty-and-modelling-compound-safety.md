@@ -121,3 +121,4 @@ The United States has no matching federal boron limit, so the European figure is
 - The base materials that are a better fit for a bin are in [sensory play for toddlers: bins, bases and what to avoid](/post/sensory-play-toddlers-bins-guide).
 - Where the residue ends up is the subject of [how to clean and sanitise toys](/post/how-to-clean-and-sanitise-toys).
 - And the general labelling framework is in [how to read toy safety labels](/post/how-to-read-toy-safety-labels).
+- What a compound is made of decides whether it can be washed away or has to be binned, and the wider end-of-life question is in [a toy's lifespan and what to do at the end](/post/toy-lifecycle-recycling-and-reuse).

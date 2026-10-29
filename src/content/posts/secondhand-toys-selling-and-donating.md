@@ -110,3 +110,4 @@ For the pile that is neither sellable nor deductible, the honest answer is the l
 - What the law gives you when a new purchase goes wrong is set out in [toy returns and warranties](/post/toy-returns-and-warranties).
 - Why a smaller shelf is not a loss is argued in [fewer toys and toy rotation](/post/fewer-toys-better-play-toy-rotation).
 - The step that comes before packing anything away is covered in [how to clean and sanitise toys](/post/how-to-clean-and-sanitise-toys).
+- Passing a toy on is only one of the exits, and the full set including the recycling and battery routes is in [a toy's lifespan and what to do at the end](/post/toy-lifecycle-recycling-and-reuse).

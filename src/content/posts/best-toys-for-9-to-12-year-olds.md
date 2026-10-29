@@ -104,3 +104,4 @@ The toy industry stops designing seriously for this age, so stop shopping as if 
 - Screens become the competing activity, and [app-connected toys](/post/app-connected-toys-worth-it) asks what is left when the app is gone.
 - Anything with wheels needs a helmet that fits, per [choosing a first bike and helmet](/post/choosing-a-first-bike-and-helmet).
 - What the same age is working on beyond toys is covered in [toys and money skills for 9 to 12 year olds](/post/toys-and-money-skills-9-to-12).
+- What actually fills an unsupervised afternoon is the other half of this question, weighed in [after-school hours and kids home alone](/post/after-school-hours-and-kids-home-alone).

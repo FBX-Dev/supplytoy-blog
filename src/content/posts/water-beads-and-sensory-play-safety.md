@@ -100,3 +100,4 @@ If you want the sensory bin without the mechanism, plain water, kinetic sand, pl
 - The other swallow case that arrives disguised as a toy is in [magnet toy safety](/post/magnet-toy-safety-swallowing-risk).
 - What gets left at the bottom of the bin afterwards is answered by [how to clean and sanitise toys](/post/how-to-clean-and-sanitise-toys).
 - And the outdoor water version of the same base is in [water tables for toddlers](/post/water-tables-for-toddlers).
+- The same disposal problem turns up in sensory play, and the full set of exits is in [a toy's lifespan and what to do at the end](/post/toy-lifecycle-recycling-and-reuse).

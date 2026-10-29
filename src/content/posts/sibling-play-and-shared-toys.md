@@ -99,3 +99,4 @@ The things that help are more about setup than about discipline. Separate shared
 - Why a smaller pile is easier to share is argued in [why fewer toys lead to better play](/post/fewer-toys-better-play-toy-rotation).
 - And the version of this question that starts before the second child arrives is [gifts for a second child](/post/gifts-for-a-second-child).
 - For the games that work with a mixed-age table, [family board games that actually get played](/post/family-board-games-that-get-played) sets out the tests.
+- The first place a child negotiates anything is between siblings, and how that habit transfers to friends is in [friendships and peer pressure at 9 to 11](/post/friendships-and-peer-pressure-ages-9-to-11).

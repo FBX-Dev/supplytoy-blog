@@ -109,3 +109,4 @@ Clear the room first, and the buying gets easy. Remove the pre-2011 crib, the li
 - The small-parts and button-battery rules are collected in [choking hazards and toy safety](/post/toy-safety-checklist-choking-hazards).
 - The lidded-box problem is one half of [toy storage and playroom organisation](/post/toy-storage-and-playroom-organisation).
 - The equipment that sits at the top of the do-not-use list has its own article in [baby walkers, jumpers and activity centres](/post/baby-walkers-jumpers-and-activity-centres-safety).
+- The same routine has to survive being run at somebody else's house, which is the argument in [after-school hours and kids home alone](/post/after-school-hours-and-kids-home-alone).

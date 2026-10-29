@@ -117,3 +117,4 @@ Buy the coding toy that still works when the wifi is off, and read the age grade
 - The age bands either side of this category are in [toys for 7 and 8-year-olds](/post/best-toys-for-7-and-8-year-olds).
 - The non-rechargeable version of a swallow risk is in [button battery safety](/post/button-battery-safety-toy-guide).
 - And the other component that has its own rule is covered in [magnet toy safety](/post/magnet-toy-safety-swallowing-risk).
+- The category most often bought for its label rather than its play is the case study in [friendships and peer pressure at 9 to 11](/post/friendships-and-peer-pressure-ages-9-to-11).

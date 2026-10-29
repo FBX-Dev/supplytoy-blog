@@ -93,3 +93,4 @@ If the answers are yes, yes and no, buy it, and make it the object of a plan rat
 - The games that survive being played twice are weighed in [family board games that get played](/post/family-board-games-that-get-played).
 - The projects that take weeks to finish are set out in [building sets for kids 6 to 12](/post/building-sets-for-kids-6-to-12).
 - Why the expensive thing ends up in a drawer is explained in [why kids abandon toys](/post/why-kids-abandon-toys).
+- The "everyone else has one" sentence is also a money conversation, and the social side of it is in [friendships and peer pressure at 9 to 11](/post/friendships-and-peer-pressure-ages-9-to-11).

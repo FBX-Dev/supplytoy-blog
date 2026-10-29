@@ -101,3 +101,4 @@ So the routine is short. Measure the seat height, the table height and the heigh
 - Why the age on the box is a safety document rather than a difficulty rating is explained in [how to read toy safety labels](/post/how-to-read-toy-safety-labels).
 - The small-parts rule that governs everything else in the room is collected in [choking hazards and toy safety](/post/toy-safety-checklist-choking-hazards).
 - The first piece of furniture a child sleeps in is covered in [toys for 0 to 3 months](/post/toys-for-0-to-3-months).
+- Where the homework that arrives with this age actually gets done is the second half of the same afternoon, covered in [kids tables and chairs](/post/kids-tables-and-chairs).

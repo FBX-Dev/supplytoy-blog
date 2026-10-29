@@ -105,3 +105,4 @@ Buy fewer pieces, keep them reachable, rotate them, and then get out of the way.
 - Material is a separate question, covered in [wooden versus plastic toys](/post/wooden-vs-plastic-toys).
 - And the clearest example of an open-ended toy is [a plain set of wooden blocks](/post/best-wooden-building-blocks-1-to-3).
 - An open-ended toy also has to be matched to what a child can actually do, which is the argument in [toys and play for children with special needs](/post/toys-and-play-for-children-with-special-needs).
+- The toys that outlast a trend are the ones that do more than one thing, which is what makes them the answer to [friendships and peer pressure at 9 to 11](/post/friendships-and-peer-pressure-ages-9-to-11).

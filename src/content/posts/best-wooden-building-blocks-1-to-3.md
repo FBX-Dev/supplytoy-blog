@@ -112,3 +112,4 @@ That pattern is normal. It is not a verdict on the blocks.
 - If you are still deciding between materials, [wooden versus plastic toys](/post/wooden-vs-plastic-toys) works through the trade-offs.
 - For the rest of the toy box at this age, see [toys for 2-year-olds](/post/best-toys-for-2-year-olds).
 - For the older version of the same toy, see [building sets for 6 to 12-year-olds](/post/building-sets-for-kids-6-to-12).
+- The end of that same argument, once the blocks are outgrown, is in [a toy's lifespan and what to do at the end](/post/toy-lifecycle-recycling-and-reuse).

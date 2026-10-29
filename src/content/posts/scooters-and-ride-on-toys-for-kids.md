@@ -107,3 +107,4 @@ A scooter is a genuinely good toy. It is just one where the details you cannot s
 - For the toddler version of the same decision, see [push cars and ride-ons for toddlers](/post/best-ride-on-toys-push-cars-toddlers).
 - Where the thing lives when it is not being ridden is covered in [outdoor toys for 6 to 12-year-olds](/post/outdoor-toys-for-kids-6-to-12).
 - Anything with a rechargeable pack adds a second risk, set out in [lithium battery toys and charging safety](/post/lithium-battery-toys-and-charging-safety).
+- Anything with wheels that gets ridden unsupervised after school is covered in [after-school hours and kids home alone](/post/after-school-hours-and-kids-home-alone).

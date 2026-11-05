@@ -79,3 +79,6 @@ _trash/
 
 # WorkBuddy 项目数据与工作日志（本地留存，不进公开仓库）
 .workbuddy/
+
+# 写作段/发布段交接文件（临时状态，不入库）
+_batch_pending.json

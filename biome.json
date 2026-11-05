@@ -23,7 +23,8 @@
 			"!**/_trash",
 			"!**/_tmp_verify",
 			"!**/_tmp_images",
-			"!**/docs/editor"
+			"!**/docs/editor",
+			"!**/_batch_pending.json"
 		]
 	},
 	"formatter": {

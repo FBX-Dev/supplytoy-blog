@@ -109,3 +109,4 @@ Then ask "how do you know?" and hold the pause. The answer to that question is t
 - The age guide is [toys for 4 and 5-year-olds](/post/best-toys-for-4-and-5-year-olds).
 - Board games are where counting turns into turn-taking, in [first board games for 4 and 5-year-olds](/post/first-board-games-for-4-and-5-year-olds).
 - And the wider picture is in [kindergarten readiness through play](/post/kindergarten-readiness-through-play).
+- The daily jobs that build the same sense of ownership and follow-through are set out in [chores and responsibility for ages 6 to 9](/post/chores-and-responsibility-ages-6-to-9).

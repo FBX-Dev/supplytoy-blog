@@ -92,3 +92,4 @@ A countdown works when the daily thing is small, repeatable, and easy to finish.
 - If the calendar contains small pieces, the age line it has to clear is the one in [choking hazards and toy safety](/post/toy-safety-checklist-choking-hazards).
 - For the rest of the run-up, [stocking stuffers for kids 6 to 12](/post/stocking-stuffers-for-kids-6-to-12) covers the older band.
 - And [holiday gifts that are not toys](/post/holiday-gifts-that-arent-toys) is the alternative when a countdown has already been done once.
+- Once the term starts, the routine that actually decides the year is covered in [the first week of school and the mornings after it](/post/first-week-of-school-and-morning-routines).

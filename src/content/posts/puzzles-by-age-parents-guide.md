@@ -133,3 +133,4 @@ Buy one puzzle at a time, and store each one in its own bag. A well-chosen singl
 - The three-year-old puzzle jump is described in [toys for 3-year-olds](/post/best-toys-for-3-year-olds).
 - And the upper end of the sequence is in [toys for 4 and 5-year-olds](/post/best-toys-for-4-and-5-year-olds).
 - For the four and five-year-old band specifically, [puzzles for 4 and 5-year-olds](/post/puzzles-for-4-and-5-year-olds) goes deeper.
+- Puzzles are not the only job a child can finish from start to end; [cooking with kids](/post/cooking-with-kids-kitchen-skills) walks through the kitchen skills worth teaching by age.

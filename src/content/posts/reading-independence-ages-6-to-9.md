@@ -88,3 +88,4 @@ Independence in reading is not a decision a child makes one day. It is an accumu
 - Choosing books as presents is covered in [holiday gifts that are not toys](/post/holiday-gifts-that-arent-toys).
 - For the age group this spans, see [toys for 6-year-olds](/post/best-toys-for-6-year-olds).
 - The long quiet stretch after school is exactly where independent reading gets its hours, and the part of it that belongs to the child alone is set out in [after-school hours and kids home alone](/post/after-school-hours-and-kids-home-alone).
+- Handing over the remembering is the next step up, and [the middle school transition](/post/middle-school-transition-and-independence) explains what actually changes when one teacher becomes five.

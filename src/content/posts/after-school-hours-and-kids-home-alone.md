@@ -107,3 +107,4 @@ Being home alone is not something a child unlocks at an age. It is a routine you
 - The toys that hold up for this age band, and which ones do not, are covered in [the best toys for 9 to 12-year-olds](/post/best-toys-for-9-to-12-year-olds).
 - For something that gives two children a shared job instead of a shared screen, start with [family board games that actually get played](/post/family-board-games-that-get-played).
 - For filling the hours outdoors while it is still light, see [outdoor toys for kids 6 to 12](/post/outdoor-toys-for-kids-6-to-12).
+- The other end of the same day is just as much a routine problem, and [bedtime routines for ages 9 to 12](/post/bedtime-routines-ages-9-to-12) covers what to hold when the early bedtime stops working.

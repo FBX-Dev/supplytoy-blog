@@ -86,7 +86,9 @@ const home = await body("/");
 const checks = [
 	[
 		"首页 title=独立 SEO 文案",
-		/<title>SupplyToy \u2014 Toy Reviews &amp; Buying Guides for Parents<\/title>/.test(home),
+		/<title>SupplyToy \u2014 Toy Reviews &amp; Buying Guides for Parents<\/title>/.test(
+			home,
+		),
 	],
 	["AdSense 脚本在源码", home.includes("ca-pub-3948558780581083")],
 	["GA4 ID 在源码", home.includes("G-NLZVKSJ9HB")],

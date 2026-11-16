@@ -174,8 +174,9 @@ console.log("\n【5】canonical 与 title");
 {
 	const home = read(path.join(DIST, "index.html"));
 	const homeTitle = (home.match(/<title>([^<]*)<\/title>/) || [])[1];
-	homeTitle === "SupplyToy"
-		? ok("首页 title = SupplyToy（无副标题）")
+	// 首页 title 用独立文案（站名在前 + 定位语），& 在 HTML 里转义为 &amp;
+	homeTitle === "SupplyToy \u2014 Toy Reviews &amp; Buying Guides for Parents"
+		? ok("首页 title = 独立 SEO 文案")
 		: bad("首页 title 不符", `实际 "${homeTitle}"`);
 
 	const homeCanon = (home.match(/<link rel="canonical" href="([^"]*)"/) ||

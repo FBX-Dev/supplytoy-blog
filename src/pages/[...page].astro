@@ -23,9 +23,22 @@ export const getStaticPaths = (async ({ paginate }) => {
 const { page } = Astro.props;
 
 const len = page.data.length;
+
+// 首页独立 SEO：主题默认把首页 title 写成裸站名、description 回退成 title，
+// 两者都是 "SupplyToy"，浪费搜索摘要位。只给第 1 页传独立值，分页页保持默认。
+// 分隔符用 em dash，与文章页一致；站名在前是结案文案。
+// 注意：paginate 的页码字段是 page.currentPage（不是 page.current）
+const homeTitle =
+	page.currentPage === 1
+		? "SupplyToy \u2014 Toy Reviews & Buying Guides for Parents"
+		: undefined;
+const homeDescription =
+	page.currentPage === 1
+		? "Independent toy reviews, age-by-age buying guides and safety checks for parents, with sources and affiliate links clearly disclosed."
+		: undefined;
 ---
 
-<MainGridLayout>
+<MainGridLayout title={homeTitle} description={homeDescription} titleSuffix={false}>
 	{showCategoryBar && <CategoryBar />}
 	<PostPage page={page} />
 	<Pagination

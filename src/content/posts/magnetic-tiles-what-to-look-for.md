@@ -100,3 +100,4 @@ Buy the tile, not the count. Check the age label, shake every tile, inspect the 
 - They are the standard three-year-old purchase, per [toys for 3-year-olds](/post/best-toys-for-3-year-olds).
 - And they stay in use at four and five, as [that age guide](/post/best-toys-for-4-and-5-year-olds) describes.
 - For the option of borrowing a set instead of buying one, see [toy libraries and toy rental services](/post/toy-libraries-and-toy-rental-services).
+- On the days when even a small set feels like too much effort, [quiet play on sick days](/post/quiet-play-on-sick-days) covers what to reach for instead.

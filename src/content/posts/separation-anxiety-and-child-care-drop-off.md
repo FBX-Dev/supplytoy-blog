@@ -120,3 +120,4 @@ So the strategy is not a product. It is a habit: a goodbye that is brief, identi
 - For the whole of that year in one place, see [the best toys for 2-year-olds](/post/best-toys-for-2-year-olds).
 - If a comfort object is part of your plan, start with [how to choose a first stuffed animal or lovey](/post/how-to-choose-first-stuffed-animal-lovey).
 - The same settling-in skill, one stage later, runs through [kindergarten readiness through play](/post/kindergarten-readiness-through-play).
+- When the goodbyes belong to a whole house rather than a classroom door, [pack the toys last when you move house with kids](/post/moving-to-a-new-home-with-kids) picks up the same thread.

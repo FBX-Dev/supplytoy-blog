@@ -96,3 +96,4 @@ Then the maintenance list, which is short: fit a lid that works, let the sand dr
 - The wider outdoor-risk picture is in [playground and outdoor play safety](/post/playground-and-outdoor-play-safety).
 - The hand-to-mouth question turns up in indoor bins too, which is the subject of [sensory play for toddlers: bins, bases and what to avoid](/post/sensory-play-toddlers-bins-guide).
 - And what gets left in the bottom of the container at the end of the day is answered by [how to clean and sanitise toys](/post/how-to-clean-and-sanitise-toys).
+- When the digging starts to look like tending rather than scooping, [gardening with kids: what they really learn](/post/gardening-with-kids-what-they-really-learn) follows that routine.
